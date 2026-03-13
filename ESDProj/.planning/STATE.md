@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 01-foundation/01-03-PLAN.md
-last_updated: "2026-03-13T15:30:34.979Z"
+stopped_at: Completed 01-foundation/01-02-PLAN.md
+last_updated: "2026-03-13T15:30:40.302Z"
 last_activity: 2026-03-13 — Roadmap created; ready to begin Phase 1 planning
 progress:
   total_phases: 6
@@ -70,6 +70,8 @@ Recent decisions affecting current work:
 - [Phase 01-foundation]: .gitignore excludes firebase-service-account.json and .env; .env.example is source of truth for all required env vars
 - [Phase 01-foundation]: strip_path: false on all Kong routes — Flask registers routes at /api/*, stripping prefix causes 404
 - [Phase 01-foundation]: KONG-10 JWT plugin deferred to Phase 2 — all routes open in Phase 1, comment added to kong.yml
+- [Phase 01-foundation]: pricing_service has no Firebase volume — hardcoded rates, no Firestore dependency
+- [Phase 01-foundation]: Workers (twilio_wrapper, activity_log) have no exposed ports — AMQP consumers only, depend on RabbitMQ service_healthy
 
 ### Pending Todos
 
@@ -81,6 +83,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-13T15:30:22.890Z
-Stopped at: Completed 01-foundation/01-03-PLAN.md
+Last session: 2026-03-13T15:30:40.300Z
+Stopped at: Completed 01-foundation/01-02-PLAN.md
 Resume file: None

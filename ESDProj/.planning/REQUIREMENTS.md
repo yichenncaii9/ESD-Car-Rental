@@ -7,10 +7,10 @@
 
 ### Infrastructure
 
-- [ ] **INFRA-01**: Docker Compose brings up all 18 containers cleanly on `docker-compose up` (1 frontend, 1 kong, 1 rabbitmq, 4 composite, 5 atomic, 1 websocket_server, 3 wrappers, 2 workers)
-- [ ] **INFRA-02**: All services are on a shared Docker network "rental-net"
-- [ ] **INFRA-03**: RabbitMQ management UI accessible at port 15672
-- [ ] **INFRA-04**: Kong admin API accessible at port 8001, proxy at port 8000
+- [x] **INFRA-01**: Docker Compose brings up all 18 containers cleanly on `docker-compose up` (1 frontend, 1 kong, 1 rabbitmq, 4 composite, 5 atomic, 1 websocket_server, 3 wrappers, 2 workers)
+- [x] **INFRA-02**: All services are on a shared Docker network "rental-net"
+- [x] **INFRA-03**: RabbitMQ management UI accessible at port 15672
+- [x] **INFRA-04**: Kong admin API accessible at port 8001, proxy at port 8000
 - [x] **INFRA-05**: .env.example documents all required API keys
 - [x] **INFRA-06**: .gitignore excludes firebase-service-account.json and .env
 
@@ -131,10 +131,10 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| INFRA-01 | Phase 1 - Foundation | Pending |
-| INFRA-02 | Phase 1 - Foundation | Pending |
-| INFRA-03 | Phase 1 - Foundation | Pending |
-| INFRA-04 | Phase 1 - Foundation | Pending |
+| INFRA-01 | Phase 1 - Foundation | Complete |
+| INFRA-02 | Phase 1 - Foundation | Complete |
+| INFRA-03 | Phase 1 - Foundation | Complete |
+| INFRA-04 | Phase 1 - Foundation | Complete |
 | INFRA-05 | Phase 1 - Foundation | Complete |
 | INFRA-06 | Phase 1 - Foundation | Complete |
 | KONG-01 | Phase 1 - Foundation | Complete |
