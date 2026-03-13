@@ -1,0 +1,385 @@
+networks:
+  rental-net:
+    driver: bridge
+    name: rental-net
+
+volumes:
+  rabbitmq_data:
+    name: rental_rabbitmq_data
+
+services:
+
+  # ─────────────────────────────────────────────
+  # Infrastructure
+  # ─────────────────────────────────────────────
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - rental-net
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  kong:
+    image: kong:3.0-alpine
+    container_name: kong
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /usr/local/kong/declarative/kong.yml
+      KONG_ADMIN_LISTEN: "0.0.0.0:8001"
+      KONG_PROXY_LISTEN: "0.0.0.0:8000"
+      KONG_LOG_LEVEL: info
+    volumes:
+      - ./kong.yml:/usr/local/kong/declarative/kong.yml:ro
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+    networks:
+      - rental-net
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8001/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────
+  # Atomic Services
+  # ─────────────────────────────────────────────
+
+  vehicle_service:
+    build:
+      context: ./atomic/vehicle_service
+    container_name: vehicle_service
+    ports:
+      - "5001:5001"
+    environment:
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+      GOOGLE_APPLICATION_CREDENTIALS: /secrets/firebase-service-account.json
+    volumes:
+      - ./firebase-service-account.json:/secrets/firebase-service-account.json:ro
+    networks:
+      - rental-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  booking_service:
+    build:
+      context: ./atomic/booking_service
+    container_name: booking_service
+    ports:
+      - "5002:5002"
+    environment:
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+      GOOGLE_APPLICATION_CREDENTIALS: /secrets/firebase-service-account.json
+    volumes:
+      - ./firebase-service-account.json:/secrets/firebase-service-account.json:ro
+    networks:
+      - rental-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  driver_service:
+    build:
+      context: ./atomic/driver_service
+    container_name: driver_service
+    ports:
+      - "5003:5003"
+    environment:
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+      GOOGLE_APPLICATION_CREDENTIALS: /secrets/firebase-service-account.json
+    volumes:
+      - ./firebase-service-account.json:/secrets/firebase-service-account.json:ro
+    networks:
+      - rental-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5003/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  report_service:
+    build:
+      context: ./atomic/report_service
+    container_name: report_service
+    ports:
+      - "5004:5004"
+    environment:
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+      GOOGLE_APPLICATION_CREDENTIALS: /secrets/firebase-service-account.json
+    volumes:
+      - ./firebase-service-account.json:/secrets/firebase-service-account.json:ro
+    networks:
+      - rental-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5004/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  pricing_service:
+    build:
+      context: ./atomic/pricing_service
+    container_name: pricing_service
+    ports:
+      - "5005:5005"
+    networks:
+      - rental-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5005/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────
+  # Composite Services
+  # ─────────────────────────────────────────────
+
+  composite_book_car:
+    build:
+      context: ./composite/book_car
+    container_name: composite_book_car
+    ports:
+      - "6001:6001"
+    environment:
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+      GOOGLE_APPLICATION_CREDENTIALS: /secrets/firebase-service-account.json
+    volumes:
+      - ./firebase-service-account.json:/secrets/firebase-service-account.json:ro
+    networks:
+      - rental-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6001/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  composite_cancel_booking:
+    build:
+      context: ./composite/cancel_booking
+    container_name: composite_cancel_booking
+    ports:
+      - "6002:6002"
+    environment:
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+      GOOGLE_APPLICATION_CREDENTIALS: /secrets/firebase-service-account.json
+    volumes:
+      - ./firebase-service-account.json:/secrets/firebase-service-account.json:ro
+    networks:
+      - rental-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6002/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  composite_report_issue:
+    build:
+      context: ./composite/report_issue
+    container_name: composite_report_issue
+    ports:
+      - "6003:6003"
+    environment:
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+      GOOGLE_APPLICATION_CREDENTIALS: /secrets/firebase-service-account.json
+    volumes:
+      - ./firebase-service-account.json:/secrets/firebase-service-account.json:ro
+    networks:
+      - rental-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6003/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  composite_resolve_issue:
+    build:
+      context: ./composite/resolve_issue
+    container_name: composite_resolve_issue
+    ports:
+      - "6004:6004"
+    environment:
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+      GOOGLE_APPLICATION_CREDENTIALS: /secrets/firebase-service-account.json
+    volumes:
+      - ./firebase-service-account.json:/secrets/firebase-service-account.json:ro
+    networks:
+      - rental-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6004/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────
+  # Wrappers (External API)
+  # ─────────────────────────────────────────────
+
+  openai_wrapper:
+    build:
+      context: ./wrappers/openai_wrapper
+    container_name: openai_wrapper
+    ports:
+      - "6200:6200"
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    networks:
+      - rental-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6200/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  googlemaps_wrapper:
+    build:
+      context: ./wrappers/googlemaps_wrapper
+    container_name: googlemaps_wrapper
+    ports:
+      - "6201:6201"
+    environment:
+      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
+    networks:
+      - rental-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6201/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  stripe_wrapper:
+    build:
+      context: ./wrappers/stripe_wrapper
+    container_name: stripe_wrapper
+    ports:
+      - "6202:6202"
+    environment:
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+    networks:
+      - rental-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6202/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────
+  # WebSocket Server
+  # ─────────────────────────────────────────────
+
+  websocket_server:
+    build:
+      context: ./websocket_server
+    container_name: websocket_server
+    ports:
+      - "6100:6100"
+    networks:
+      - rental-net
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:6100/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────
+  # Workers (AMQP consumers — no exposed ports)
+  # ─────────────────────────────────────────────
+
+  twilio_wrapper:
+    build:
+      context: ./workers/twilio_wrapper
+    container_name: twilio_wrapper
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
+      TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER}
+      TWILIO_SERVICE_TEAM_NUMBER: ${TWILIO_SERVICE_TEAM_NUMBER}
+      WEBSOCKET_SERVER_URL: http://websocket_server:6100
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - rental-net
+    restart: unless-stopped
+
+  activity_log:
+    build:
+      context: ./workers/activity_log
+    container_name: activity_log
+    environment:
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+      GOOGLE_APPLICATION_CREDENTIALS: /secrets/firebase-service-account.json
+      WEBSOCKET_SERVER_URL: http://websocket_server:6100
+    volumes:
+      - ./firebase-service-account.json:/secrets/firebase-service-account.json:ro
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - rental-net
+    restart: unless-stopped
+
+  # ─────────────────────────────────────────────
+  # Frontend
+  # ─────────────────────────────────────────────
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: frontend
+    ports:
+      - "8080:8080"
+    environment:
+      VITE_KONG_URL: http://localhost:8000
+      VITE_GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
+    networks:
+      - rental-net
+    restart: unless-stopped
