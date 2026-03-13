@@ -1,0 +1,349 @@
+_format_version: "3.0"
+_transform: true
+
+# KONG-10 (JWT plugin) is deferred to Phase 2.
+# All routes are open in Phase 1. Firebase JWT validation is added in Phase 2.
+
+services:
+
+  # 1. book-car composite
+  - name: book-car-service
+    url: http://composite_book_car:6001
+    routes:
+      - name: book-car-route
+        paths:
+          - /api/book-car
+        strip_path: false
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        plugins:
+          - name: cors
+            config:
+              origins:
+                - "http://localhost:8080"
+              methods:
+                - GET
+                - POST
+                - PUT
+                - DELETE
+                - OPTIONS
+              headers:
+                - Authorization
+                - Content-Type
+                - X-Requested-With
+              exposed_headers:
+                - X-Auth-Token
+              credentials: true
+              max_age: 3600
+          - name: rate-limiting
+            config:
+              minute: 60
+              policy: local
+
+  # 2. cancel-booking composite
+  - name: cancel-booking-service
+    url: http://composite_cancel_booking:6002
+    routes:
+      - name: cancel-booking-route
+        paths:
+          - /api/cancel-booking
+        strip_path: false
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        plugins:
+          - name: cors
+            config:
+              origins:
+                - "http://localhost:8080"
+              methods:
+                - GET
+                - POST
+                - PUT
+                - DELETE
+                - OPTIONS
+              headers:
+                - Authorization
+                - Content-Type
+                - X-Requested-With
+              exposed_headers:
+                - X-Auth-Token
+              credentials: true
+              max_age: 3600
+          - name: rate-limiting
+            config:
+              minute: 60
+              policy: local
+
+  # 3. report-issue composite
+  - name: report-issue-service
+    url: http://composite_report_issue:6003
+    routes:
+      - name: report-issue-route
+        paths:
+          - /api/report-issue
+        strip_path: false
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        plugins:
+          - name: cors
+            config:
+              origins:
+                - "http://localhost:8080"
+              methods:
+                - GET
+                - POST
+                - PUT
+                - DELETE
+                - OPTIONS
+              headers:
+                - Authorization
+                - Content-Type
+                - X-Requested-With
+              exposed_headers:
+                - X-Auth-Token
+              credentials: true
+              max_age: 3600
+          - name: rate-limiting
+            config:
+              minute: 60
+              policy: local
+
+  # 4. resolve-issue composite
+  - name: resolve-issue-service
+    url: http://composite_resolve_issue:6004
+    routes:
+      - name: resolve-issue-route
+        paths:
+          - /api/resolve-issue
+        strip_path: false
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        plugins:
+          - name: cors
+            config:
+              origins:
+                - "http://localhost:8080"
+              methods:
+                - GET
+                - POST
+                - PUT
+                - DELETE
+                - OPTIONS
+              headers:
+                - Authorization
+                - Content-Type
+                - X-Requested-With
+              exposed_headers:
+                - X-Auth-Token
+              credentials: true
+              max_age: 3600
+          - name: rate-limiting
+            config:
+              minute: 60
+              policy: local
+
+  # 5. vehicle atomic service
+  - name: vehicle-service
+    url: http://vehicle_service:5001
+    routes:
+      - name: vehicles-route
+        paths:
+          - /api/vehicles
+        strip_path: false
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        plugins:
+          - name: cors
+            config:
+              origins:
+                - "http://localhost:8080"
+              methods:
+                - GET
+                - POST
+                - PUT
+                - DELETE
+                - OPTIONS
+              headers:
+                - Authorization
+                - Content-Type
+                - X-Requested-With
+              exposed_headers:
+                - X-Auth-Token
+              credentials: true
+              max_age: 3600
+          - name: rate-limiting
+            config:
+              minute: 60
+              policy: local
+
+  # 6. booking atomic service
+  - name: booking-service
+    url: http://booking_service:5002
+    routes:
+      - name: bookings-route
+        paths:
+          - /api/bookings
+        strip_path: false
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        plugins:
+          - name: cors
+            config:
+              origins:
+                - "http://localhost:8080"
+              methods:
+                - GET
+                - POST
+                - PUT
+                - DELETE
+                - OPTIONS
+              headers:
+                - Authorization
+                - Content-Type
+                - X-Requested-With
+              exposed_headers:
+                - X-Auth-Token
+              credentials: true
+              max_age: 3600
+          - name: rate-limiting
+            config:
+              minute: 60
+              policy: local
+
+  # 7. driver atomic service
+  - name: driver-service
+    url: http://driver_service:5003
+    routes:
+      - name: drivers-route
+        paths:
+          - /api/drivers
+        strip_path: false
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        plugins:
+          - name: cors
+            config:
+              origins:
+                - "http://localhost:8080"
+              methods:
+                - GET
+                - POST
+                - PUT
+                - DELETE
+                - OPTIONS
+              headers:
+                - Authorization
+                - Content-Type
+                - X-Requested-With
+              exposed_headers:
+                - X-Auth-Token
+              credentials: true
+              max_age: 3600
+          - name: rate-limiting
+            config:
+              minute: 60
+              policy: local
+
+  # 8. report atomic service
+  - name: report-service
+    url: http://report_service:5004
+    routes:
+      - name: reports-route
+        paths:
+          - /api/reports
+        strip_path: false
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        plugins:
+          - name: cors
+            config:
+              origins:
+                - "http://localhost:8080"
+              methods:
+                - GET
+                - POST
+                - PUT
+                - DELETE
+                - OPTIONS
+              headers:
+                - Authorization
+                - Content-Type
+                - X-Requested-With
+              exposed_headers:
+                - X-Auth-Token
+              credentials: true
+              max_age: 3600
+          - name: rate-limiting
+            config:
+              minute: 60
+              policy: local
+
+  # 9. pricing atomic service
+  - name: pricing-service
+    url: http://pricing_service:5005
+    routes:
+      - name: pricing-route
+        paths:
+          - /api/pricing
+        strip_path: false
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        plugins:
+          - name: cors
+            config:
+              origins:
+                - "http://localhost:8080"
+              methods:
+                - GET
+                - POST
+                - PUT
+                - DELETE
+                - OPTIONS
+              headers:
+                - Authorization
+                - Content-Type
+                - X-Requested-With
+              exposed_headers:
+                - X-Auth-Token
+              credentials: true
+              max_age: 3600
+          - name: rate-limiting
+            config:
+              minute: 60
+              policy: local
