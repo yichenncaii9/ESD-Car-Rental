@@ -25,17 +25,17 @@
 
 ### API Gateway (Kong)
 
-- [ ] **KONG-01**: Kong routes /api/book-car to composite_book_car:6001
-- [ ] **KONG-02**: Kong routes /api/cancel-booking to composite_cancel_booking:6002
-- [ ] **KONG-03**: Kong routes /api/report-issue to composite_report_issue:6003
-- [ ] **KONG-04**: Kong routes /api/resolve-issue to composite_resolve_issue:6004
-- [ ] **KONG-05**: Kong routes /api/vehicles to vehicle_service:5001
-- [ ] **KONG-06**: Kong routes /api/bookings to booking_service:5002
+- [x] **KONG-01**: Kong routes /api/book-car to composite_book_car:6001
+- [x] **KONG-02**: Kong routes /api/cancel-booking to composite_cancel_booking:6002
+- [x] **KONG-03**: Kong routes /api/report-issue to composite_report_issue:6003
+- [x] **KONG-04**: Kong routes /api/resolve-issue to composite_resolve_issue:6004
+- [x] **KONG-05**: Kong routes /api/vehicles to vehicle_service:5001
+- [x] **KONG-06**: Kong routes /api/bookings to booking_service:5002
 - [ ] **KONG-07**: Kong routes /api/drivers to driver_service:5003
-- [ ] **KONG-08**: Kong routes /api/reports to report_service:5004
-- [ ] **KONG-09**: Kong routes /api/pricing to pricing_service:5005
+- [x] **KONG-08**: Kong routes /api/reports to report_service:5004
+- [x] **KONG-09**: Kong routes /api/pricing to pricing_service:5005
 - [ ] **KONG-10**: Kong jwt plugin validates Firebase JWT on all routes
-- [ ] **KONG-11**: Kong cors and rate-limiting plugins enabled
+- [x] **KONG-11**: Kong cors and rate-limiting plugins enabled
 
 ### Composite Services
 
@@ -137,17 +137,17 @@
 | INFRA-04 | Phase 1 - Foundation | Pending |
 | INFRA-05 | Phase 1 - Foundation | Complete |
 | INFRA-06 | Phase 1 - Foundation | Complete |
-| KONG-01 | Phase 1 - Foundation | Pending |
-| KONG-02 | Phase 1 - Foundation | Pending |
-| KONG-03 | Phase 1 - Foundation | Pending |
-| KONG-04 | Phase 1 - Foundation | Pending |
-| KONG-05 | Phase 1 - Foundation | Pending |
-| KONG-06 | Phase 1 - Foundation | Pending |
+| KONG-01 | Phase 1 - Foundation | Complete |
+| KONG-02 | Phase 1 - Foundation | Complete |
+| KONG-03 | Phase 1 - Foundation | Complete |
+| KONG-04 | Phase 1 - Foundation | Complete |
+| KONG-05 | Phase 1 - Foundation | Complete |
+| KONG-06 | Phase 1 - Foundation | Complete |
 | KONG-07 | Phase 1 - Foundation | Pending |
-| KONG-08 | Phase 1 - Foundation | Pending |
-| KONG-09 | Phase 1 - Foundation | Pending |
+| KONG-08 | Phase 1 - Foundation | Complete |
+| KONG-09 | Phase 1 - Foundation | Complete |
 | KONG-10 | Phase 1 - Foundation | Pending |
-| KONG-11 | Phase 1 - Foundation | Pending |
+| KONG-11 | Phase 1 - Foundation | Complete |
 | DATA-01 | Phase 1 - Foundation | Pending |
 | DATA-02 | Phase 1 - Foundation | Pending |
 | DATA-03 | Phase 1 - Foundation | Pending |
