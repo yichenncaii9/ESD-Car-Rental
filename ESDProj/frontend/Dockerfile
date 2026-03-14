@@ -1,7 +1,35 @@
-FROM node:20-alpine
+# Stage 1: Build Vue/Vite app
+FROM node:20-alpine AS build-stage
 WORKDIR /app
-# Phase 2 will add package.json and Vue app source
-# Phase 1 placeholder: serve a simple index.html
-RUN echo '<!DOCTYPE html><html><body><h1>ESD Rental Car - Phase 1 Placeholder</h1></body></html>' > index.html
+COPY package*.json ./
+RUN npm ci
+COPY . .
+
+# VITE_* vars must be passed as --build-arg at docker build time
+# They are baked into the compiled JS bundle by Vite's static substitution
+ARG VITE_FIREBASE_API_KEY
+ARG VITE_FIREBASE_AUTH_DOMAIN
+ARG VITE_FIREBASE_PROJECT_ID
+ARG VITE_FIREBASE_STORAGE_BUCKET
+ARG VITE_FIREBASE_MESSAGING_SENDER_ID
+ARG VITE_FIREBASE_APP_ID
+ARG VITE_GOOGLE_MAPS_KEY
+ARG VITE_API_BASE_URL
+
+ENV VITE_FIREBASE_API_KEY=$VITE_FIREBASE_API_KEY
+ENV VITE_FIREBASE_AUTH_DOMAIN=$VITE_FIREBASE_AUTH_DOMAIN
+ENV VITE_FIREBASE_PROJECT_ID=$VITE_FIREBASE_PROJECT_ID
+ENV VITE_FIREBASE_STORAGE_BUCKET=$VITE_FIREBASE_STORAGE_BUCKET
+ENV VITE_FIREBASE_MESSAGING_SENDER_ID=$VITE_FIREBASE_MESSAGING_SENDER_ID
+ENV VITE_FIREBASE_APP_ID=$VITE_FIREBASE_APP_ID
+ENV VITE_GOOGLE_MAPS_KEY=$VITE_GOOGLE_MAPS_KEY
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+
+RUN npm run build
+
+# Stage 2: Serve compiled dist/ with nginx
+FROM nginx:stable-alpine AS prod-stage
+COPY --from=build-stage /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 8080
-CMD ["npx", "--yes", "serve", "-s", ".", "-l", "8080"]
+CMD ["nginx", "-g", "daemon off;"]
