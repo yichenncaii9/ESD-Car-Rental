@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 import os
 
@@ -26,20 +26,36 @@ def health():
 
 @app.route("/api/vehicles", methods=["GET"])
 def get_vehicles():
-    # Phase 1 stub — real logic in Phase 3
-    return jsonify({"status": "ok", "data": [], "message": "Phase 1 stub"}), 200
+    if db is None:
+        return jsonify({"status": "error", "message": "Database not available"}), 500
+    docs = db.collection("vehicles").stream()
+    results = [{"id": d.id, **d.to_dict()} for d in docs]
+    return jsonify({"status": "ok", "data": results}), 200
 
 
 @app.route("/api/vehicles/<string:vehicle_id>", methods=["GET"])
 def get_vehicle(vehicle_id):
-    # Phase 1 stub — real logic in Phase 3
-    return jsonify({"status": "ok", "data": {}, "message": "Phase 1 stub"}), 200
+    if db is None:
+        return jsonify({"status": "error", "message": "Database not available"}), 500
+    doc = db.collection("vehicles").document(vehicle_id).get()
+    if not doc.exists:
+        return jsonify({"status": "error", "message": "Vehicle not found"}), 404
+    return jsonify({"status": "ok", "data": doc.to_dict()}), 200
 
 
 @app.route("/api/vehicles/<string:vehicle_id>/status", methods=["PUT"])
 def update_vehicle_status(vehicle_id):
-    # Phase 1 stub — real logic in Phase 3
-    return jsonify({"status": "ok", "message": "Phase 1 stub"}), 200
+    if db is None:
+        return jsonify({"status": "error", "message": "Database not available"}), 500
+    body = request.get_json(silent=True) or {}
+    new_status = body.get("status")
+    if not new_status:
+        return jsonify({"status": "error", "message": "Missing required field: status"}), 400
+    doc_ref = db.collection("vehicles").document(vehicle_id)
+    if not doc_ref.get().exists:
+        return jsonify({"status": "error", "message": "Vehicle not found"}), 404
+    doc_ref.update({"status": new_status})
+    return jsonify({"status": "ok", "message": "Status updated"}), 200
 
 
 if __name__ == "__main__":
