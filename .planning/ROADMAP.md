@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - Docker Compose scaffold, Kong gateway, RabbitMQ, and seed data (completed 2026-03-13)
 - [x] **Phase 2: Frontend** - Vue.js 3 app with Firebase Auth, Google Maps, and Kong-routed API calls (completed 2026-03-14)
-- [x] **Phase 3: Atomic Services** - Five atomic Flask microservices (vehicle, booking, driver, report, pricing) (completed 2026-03-14)
+- [x] **Phase 3: Atomic Services** - Five atomic Flask microservices (vehicle, booking, driver, report, pricing) (completed 2026-03-14)
 - [ ] **Phase 4: Composite Services** - Four composite orchestration services covering all three user scenarios
 - [ ] **Phase 5: Async Workers** - AMQP workers for Twilio SMS and WebSocket real-time push; openai_wrapper is HTTP
 - [ ] **Phase 6: Kubernetes** - Convert all 18 services to Kubernetes manifests for production deployment
@@ -93,7 +93,15 @@ Plans:
   3. POST /api/report-issue: Phase A persists report with geocoded location, calls openai_wrapper HTTP for severity, updates report, returns `{ report_id, status: "submitted", severity }`; Phase B publishes to RabbitMQ "report_topic" with routing key "report.new"
   4. twilio_wrapper (AMQP consumer) sends SMS to service team; activity_log (AMQP consumer) logs event; both POST to websocket_server which emits Socket.IO update to the connected frontend
   5. POST /api/resolve-issue updates the report resolution and sends a Twilio SMS to the driver; if Twilio fails, the report is still updated and flagged with SMS unsent
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Wave 1: verify_phase4.sh + wrappers/twilio_wrapper HTTP Flask service (port 6203) + SDK requirements.txt updates
+- [ ] 04-02-PLAN.md — Wave 1: stripe_wrapper real Stripe SDK with mock failover (charge + refund)
+- [ ] 04-03-PLAN.md — Wave 1: openai_wrapper GPT-3.5-turbo severity classification + googlemaps_wrapper reverse geocode, both with mock failover
+- [ ] 04-04-PLAN.md — Wave 2: book_car composite (driver → vehicle lock → pricing → stripe → booking, with rollback)
+- [ ] 04-05-PLAN.md — Wave 2: cancel_booking composite (policy-based refund, Stripe graceful failure, Firestore direct write)
+- [ ] 04-06-PLAN.md — Wave 2: report_issue composite (Phase A + B inline RabbitMQ) + resolve_issue composite (Twilio SMS graceful failure)
 
 ### Phase 5: Async Workers
 **Goal**: After an incident is submitted and Phase A returns synchronously, the AMQP consumers process the event asynchronously — twilio_wrapper sends SMS, activity_log persists the audit event, and websocket_server pushes real-time updates to the frontend. openai_wrapper is HTTP-only (called in Phase A, not here).
@@ -128,6 +136,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 1. Foundation | 3/5 | Complete    | 2026-03-13 |
 | 2. Frontend | 7/7 | Complete   | 2026-03-14 |
 | 3. Atomic Services | 5/5 | Complete   | 2026-03-14 |
-| 4. Composite Services | 0/TBD | Not started | - |
+| 4. Composite Services | 0/6 | Not started | - |
 | 5. Async Workers | 0/TBD | Not started | - |
 | 6. Kubernetes | 0/TBD | Not started | - |
