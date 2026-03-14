@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 04-03-PLAN.md (openai_wrapper and googlemaps_wrapper real SDK implementation)
-last_updated: "2026-03-14T18:33:12.001Z"
+stopped_at: "Completed 04-01-PLAN.md (Wave 0 scaffolding: verify_phase4.sh + twilio_wrapper HTTP service)"
+last_updated: "2026-03-14T18:35:08.745Z"
 last_activity: 2026-03-13 — Roadmap created; ready to begin Phase 1 planning
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 18
-  completed_plans: 17
+  completed_plans: 18
   percent: 94
 ---
 
@@ -114,6 +114,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03-atomic-services P04 | 2 | 1 tasks | 1 files |
 | Phase 04-composite-services P02 | 5 | 1 tasks | 1 files |
 | Phase 04-composite-services P03 | 56s | 2 tasks | 2 files |
+| Phase 04-composite-services P01 | 2 | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -159,6 +160,8 @@ Recent decisions affecting current work:
 - [Phase 04-composite-services]: stripe_wrapper: pm_card_visa default payment_method (Stripe test-mode token), automatic_payment_methods with allow_redirects=never for server-side confirm
 - [Phase 04-composite-services]: googlemaps imported inside try block so import failure triggers mock fallback automatically
 - [Phase 04-composite-services]: openai_wrapper validates GPT response is low/medium/high; clamps to medium if unexpected text returned
+- [Phase 04-composite-services]: twilio_wrapper_http (wrappers/) is HTTP wrapper for Phase 4 sync SMS calls; twilio_wrapper (workers/) is AMQP consumer for Phase 5 only — two separate services
+- [Phase 04-composite-services]: Mock failover in twilio_wrapper_http: try Twilio SDK -> except -> mock_<uuid> with provider:fallback — composite services work without real Twilio credentials
 
 ### Pending Todos
 
@@ -176,6 +179,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-14T18:33:11.999Z
-Stopped at: Completed 04-03-PLAN.md (openai_wrapper and googlemaps_wrapper real SDK implementation)
+Last session: 2026-03-14T18:35:08.743Z
+Stopped at: Completed 04-01-PLAN.md (Wave 0 scaffolding: verify_phase4.sh + twilio_wrapper HTTP service)
 Resume file: None
