@@ -12,7 +12,7 @@ The project builds a 18-container microservices system delivering three user-fac
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [x] **Phase 1: Foundation** - Docker Compose scaffold, Kong gateway, RabbitMQ, and seed data (completed 2026-03-13)
+- [x] **Phase 1: Foundation** - Docker Compose scaffold, Kong gateway, RabbitMQ, and seed data (completed 2026-03-13)
 - [ ] **Phase 2: Frontend** - Vue.js 3 app with Firebase Auth, Google Maps, and Kong-routed API calls
 - [ ] **Phase 3: Atomic Services** - Five atomic Flask microservices (vehicle, booking, driver, report, pricing)
 - [ ] **Phase 4: Composite Services** - Four composite orchestration services covering all three user scenarios
@@ -52,7 +52,15 @@ Plans:
   4. Google Maps renders a map widget inside BookCar and ReportIncident views
   5. All outbound API calls in the browser use the /api/* prefix (Kong proxy), and the Authorization header contains the Firebase JWT
   6. Kong JWT plugin is enabled on all routes; valid Firebase JWTs pass, missing/invalid JWTs return 401
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [ ] 02-01-PLAN.md — Wave 1: Vue 3 Vite scaffold, firebase.js, axios.js, router, auth store, NavBar, multi-stage Dockerfile
+- [ ] 02-02-PLAN.md — Wave 2: LoginView with Firebase Auth login/signup toggle, inline errors, spinner
+- [ ] 02-03-PLAN.md — Wave 2: BookCarView (GMapMap + vehicle markers) + CancelBookingView
+- [ ] 02-04-PLAN.md — Wave 2: ReportIncidentView (GMapMap + geolocation + Places) + ServiceDashboardView (Socket.IO)
+- [ ] 02-05-PLAN.md — Wave 2: Kong JWT plugin config (RS256 consumer + jwt plugin on all 9 routes)
+- [ ] 02-06-PLAN.md — Wave 3: Browser verification checkpoint (all 6 success criteria)
 
 ### Phase 3: Atomic Services
 **Goal**: Every atomic microservice is running and correctly reading from and writing to Firestore, with all documented REST endpoints functional.
@@ -109,7 +117,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/5 | Complete    | 2026-03-13 |
-| 2. Frontend | 0/TBD | Not started | - |
+| 2. Frontend | 0/6 | Not started | - |
 | 3. Atomic Services | 0/TBD | Not started | - |
 | 4. Composite Services | 0/TBD | Not started | - |
 | 5. Async Workers | 0/TBD | Not started | - |
