@@ -3,11 +3,27 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
+stopped_at: Completed 04-03-PLAN.md (openai_wrapper and googlemaps_wrapper real SDK implementation)
+last_updated: "2026-03-14T18:33:12.001Z"
+last_activity: 2026-03-13 — Roadmap created; ready to begin Phase 1 planning
+progress:
+  total_phases: 6
+  completed_phases: 1
+  total_plans: 18
+  completed_plans: 17
+  percent: 94
+---
+
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: planning
 stopped_at: Completed 03-04-PLAN.md (booking_service Firestore routes)
 last_updated: "2026-03-14T11:52:03.141Z"
 last_activity: 2026-03-13 — Roadmap created; ready to begin Phase 1 planning
 progress:
-  total_phases: 6
+  [█████████░] 94%
   completed_phases: 1
   total_plans: 12
   completed_plans: 15
@@ -96,6 +112,8 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03-atomic-services P03 | 2 | 2 tasks | 2 files |
 | Phase 03-atomic-services P05 | 2 | 1 tasks | 1 files |
 | Phase 03-atomic-services P04 | 2 | 1 tasks | 1 files |
+| Phase 04-composite-services P02 | 5 | 1 tasks | 1 files |
+| Phase 04-composite-services P03 | 56s | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -137,6 +155,10 @@ Recent decisions affecting current work:
 - [Phase 03-atomic-services]: RPT verify checks fail due to pre-existing Firestore API disabled in GCP esd-rental-car; code is correct per spec (same as DRV)
 - [Phase 03-atomic-services]: booking_service route order corrected: user/<uid>/active and user/<uid> registered before wildcard GET <booking_id> to prevent Flask routing conflicts
 - [Cross-cutting — Phase 4+]: Mock failover pattern adopted for external wrappers — Stripe primary → mock PSP fallback (mock_<uuid>), same shape either way. When planning stripe_wrapper, openai_wrapper, and twilio_wrapper, PROMPT USER: "Do you want a mock failover for this wrapper?" Pattern: try real API → except → return mock response with provider:"fallback". Documents failover architecture for markers without requiring second real SDK.
+- [Phase 04-composite-services]: stripe_wrapper: mock_ prefix detection prevents fake mock IDs from reaching real Stripe Refund API
+- [Phase 04-composite-services]: stripe_wrapper: pm_card_visa default payment_method (Stripe test-mode token), automatic_payment_methods with allow_redirects=never for server-side confirm
+- [Phase 04-composite-services]: googlemaps imported inside try block so import failure triggers mock fallback automatically
+- [Phase 04-composite-services]: openai_wrapper validates GPT response is low/medium/high; clamps to medium if unexpected text returned
 
 ### Pending Todos
 
@@ -154,6 +176,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-14T11:48:05.736Z
-Stopped at: Completed 03-04-PLAN.md (booking_service Firestore routes)
+Last session: 2026-03-14T18:33:11.999Z
+Stopped at: Completed 04-03-PLAN.md (openai_wrapper and googlemaps_wrapper real SDK implementation)
 Resume file: None
