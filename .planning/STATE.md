@@ -136,6 +136,7 @@ Recent decisions affecting current work:
 - [Phase 03-atomic-services]: GET /api/reports/pending uses Firestore != inequality with Python-side fallback filter to avoid blocking on composite index creation
 - [Phase 03-atomic-services]: RPT verify checks fail due to pre-existing Firestore API disabled in GCP esd-rental-car; code is correct per spec (same as DRV)
 - [Phase 03-atomic-services]: booking_service route order corrected: user/<uid>/active and user/<uid> registered before wildcard GET <booking_id> to prevent Flask routing conflicts
+- [Cross-cutting — Phase 4+]: Mock failover pattern adopted for external wrappers — Stripe primary → mock PSP fallback (mock_<uuid>), same shape either way. When planning stripe_wrapper, openai_wrapper, and twilio_wrapper, PROMPT USER: "Do you want a mock failover for this wrapper?" Pattern: try real API → except → return mock response with provider:"fallback". Documents failover architecture for markers without requiring second real SDK.
 
 ### Pending Todos
 
