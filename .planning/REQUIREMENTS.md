@@ -47,7 +47,7 @@
 - [x] **COMP-06**: cancel_booking handles Stripe refund failure gracefully — booking is still cancelled, refund flagged as "pending_manual" in Firestore
 - [x] **COMP-07**: cancel_booking returns `{ booking_id, status: "cancelled", refund_amount, refund_status }` — refund_status is "processed" or "pending_manual"
 - [x] **COMP-08**: report_issue POST /report-issue Phase A (sync): booking_service check → googlemaps_wrapper reverse geocode → openai_wrapper HTTP call (severity classification) → report_service persist
-- [ ] **COMP-09**: report_issue Phase B (async): publishes to RabbitMQ "report_topic" exchange with key "report.new" (includes severity from openai_wrapper)
+- [x] **COMP-09**: report_issue Phase B (async): publishes to RabbitMQ "report_topic" exchange with key "report.new" (includes severity from openai_wrapper)
 - [x] **COMP-10**: report_issue returns `{ report_id, status: "submitted", severity }` after Phase A; Phase B publishes asynchronously
 - [x] **COMP-11**: resolve_issue POST /resolve-issue calls report_service (update resolution) → Twilio SMS to driver; handles Twilio failure gracefully (update report, flag SMS unsent)
 
@@ -182,7 +182,7 @@
 | COMP-06 | Phase 4 - Composite Services | Complete |
 | COMP-07 | Phase 4 - Composite Services | Complete |
 | COMP-08 | Phase 4 - Composite Services | Complete |
-| COMP-09 | Phase 4 - Composite Services | Pending |
+| COMP-09 | Phase 4 - Composite Services | Complete |
 | COMP-10 | Phase 4 - Composite Services | Complete |
 | COMP-11 | Phase 4 - Composite Services | Complete |
 | WORK-01 | Phase 5 - Async Workers | Pending |
