@@ -79,7 +79,7 @@ Plans:
 Plans:
 - [ ] 03-01-PLAN.md — Wave 1: verify_phase3.sh smoke test scaffold (all 17 requirements, direct ports 5001-5005)
 - [ ] 03-02-PLAN.md — Wave 2: vehicle_service — 3 routes (GET list, GET by ID, PUT status) with Firestore
-- [ ] 03-03-PLAN.md — Wave 2: pricing_service (calculate + policy, no Firestore) + driver_service (UID lookup + validate)
+- [x] 03-03-PLAN.md — Wave 2: pricing_service (calculate + policy, no Firestore) + driver_service (UID lookup + validate)
 - [ ] 03-04-PLAN.md — Wave 3: booking_service — 5 routes with Firestore (most complex, critical for Phase 4)
 - [ ] 03-05-PLAN.md — Wave 3: report_service — 5 routes with Firestore + report document schema
 

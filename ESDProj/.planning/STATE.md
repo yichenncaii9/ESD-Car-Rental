@@ -77,6 +77,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02-frontend P07 | 2 | 1 tasks | 1 files |
 | Phase 03-atomic-services P01 | 1 | 1 tasks | 1 files |
 | Phase 03-atomic-services P02 | 3 | 1 tasks | 2 files |
+| Phase 03-atomic-services P03 | 2 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -111,6 +112,8 @@ Recent decisions affecting current work:
 - [Phase 03-atomic-services]: Pre-test setup block captures TEST_BOOKING_ID and TEST_REPORT_ID at verify_phase3.sh top for reuse across dependent checks
 - [Phase 03-atomic-services]: vehicle_service GET /api/vehicles returns all vehicles without status filtering — BookCarView filters client-side
 - [Phase 03-atomic-services]: db=None guard returns 500 on all vehicle_service routes — allows container startup without Firebase credentials during dev
+- [Phase 03-atomic-services]: driver_service validate returns HTTP 200 for invalid licenses — validation query, not resource lookup; callers inspect valid field
+- [Phase 03-atomic-services]: DRV verify checks fail due to pre-existing Firestore API disabled in GCP esd-rental-car; code is correct per spec
 
 ### Pending Todos
 
@@ -128,6 +131,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-14T11:35:11.084Z
-Stopped at: Completed 03-02-PLAN.md (vehicle_service Firestore routes)
+Last session: 2026-03-14T11:39:27Z
+Stopped at: Completed 03-03-PLAN.md (pricing_service + driver_service routes)
 Resume file: None
