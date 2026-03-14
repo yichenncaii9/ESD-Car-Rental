@@ -1,6 +1,7 @@
 # Credentials — never commit these
 firebase-service-account.json
 .env
+.env.local
 
 # Python
 __pycache__/
@@ -23,3 +24,10 @@ dist/
 .idea/
 .vscode/
 *.swp
+
+# Nested repo guard — do not commit nested git clones
+# If you need a sub-project, use git submodule instead
+ESD-Car-Rental/
+
+# OS artifacts (recursive)
+**/.DS_Store
