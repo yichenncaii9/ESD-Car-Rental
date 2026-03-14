@@ -41,11 +41,11 @@
 
 - [x] **COMP-01**: book_car POST /book-car orchestrates driver_service (license check) → vehicle_service → pricing_service → booking_service → stripe_wrapper and returns a confirmed booking
 - [x] **COMP-02**: book_car handles Stripe payment failure with vehicle unlock + booking cancellation rollback
-- [ ] **COMP-03**: cancel_booking POST /cancel-booking fetches booking from booking_service and rejects if status is active trip or already cancelled
-- [ ] **COMP-04**: cancel_booking calculates refund amount via pricing_service using cancellation policy (full refund >24hrs before pickup, 50% if 1–24hrs, $0 if <1hr)
+- [x] **COMP-03**: cancel_booking POST /cancel-booking fetches booking from booking_service and rejects if status is active trip or already cancelled
+- [x] **COMP-04**: cancel_booking calculates refund amount via pricing_service using cancellation policy (full refund >24hrs before pickup, 50% if 1–24hrs, $0 if <1hr)
 - [x] **COMP-05**: cancel_booking calls stripe_wrapper to process refund, then calls booking_service to set status "cancelled" and vehicle_service to set vehicle status "available"
 - [x] **COMP-06**: cancel_booking handles Stripe refund failure gracefully — booking is still cancelled, refund flagged as "pending_manual" in Firestore
-- [ ] **COMP-07**: cancel_booking returns `{ booking_id, status: "cancelled", refund_amount, refund_status }` — refund_status is "processed" or "pending_manual"
+- [x] **COMP-07**: cancel_booking returns `{ booking_id, status: "cancelled", refund_amount, refund_status }` — refund_status is "processed" or "pending_manual"
 - [x] **COMP-08**: report_issue POST /report-issue Phase A (sync): booking_service check → googlemaps_wrapper reverse geocode → openai_wrapper HTTP call (severity classification) → report_service persist
 - [ ] **COMP-09**: report_issue Phase B (async): publishes to RabbitMQ "report_topic" exchange with key "report.new" (includes severity from openai_wrapper)
 - [x] **COMP-10**: report_issue returns `{ report_id, status: "submitted", severity }` after Phase A; Phase B publishes asynchronously
@@ -176,11 +176,11 @@
 | PRICE-02 | Phase 3 - Atomic Services | Complete |
 | COMP-01 | Phase 4 - Composite Services | Complete |
 | COMP-02 | Phase 4 - Composite Services | Complete |
-| COMP-03 | Phase 4 - Composite Services | Pending |
-| COMP-04 | Phase 4 - Composite Services | Pending |
+| COMP-03 | Phase 4 - Composite Services | Complete |
+| COMP-04 | Phase 4 - Composite Services | Complete |
 | COMP-05 | Phase 4 - Composite Services | Complete |
 | COMP-06 | Phase 4 - Composite Services | Complete |
-| COMP-07 | Phase 4 - Composite Services | Pending |
+| COMP-07 | Phase 4 - Composite Services | Complete |
 | COMP-08 | Phase 4 - Composite Services | Complete |
 | COMP-09 | Phase 4 - Composite Services | Pending |
 | COMP-10 | Phase 4 - Composite Services | Complete |
