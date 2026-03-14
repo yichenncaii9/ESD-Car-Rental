@@ -214,6 +214,8 @@ services:
     environment:
       FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
       GOOGLE_APPLICATION_CREDENTIALS: /secrets/firebase-service-account.json
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
     volumes:
       - ./firebase-service-account.json:/secrets/firebase-service-account.json:ro
     networks:
@@ -235,6 +237,7 @@ services:
     environment:
       FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
       GOOGLE_APPLICATION_CREDENTIALS: /secrets/firebase-service-account.json
+      TWILIO_WRAPPER_HOST: twilio_wrapper_http:6203
     volumes:
       - ./firebase-service-account.json:/secrets/firebase-service-account.json:ro
     networks:
@@ -303,6 +306,20 @@ services:
       timeout: 5s
       retries: 3
       start_period: 20s
+    restart: unless-stopped
+
+  twilio_wrapper_http:
+    build:
+      context: ./wrappers/twilio_wrapper
+    container_name: twilio_wrapper_http
+    ports:
+      - "6203:6203"
+    environment:
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
+      TWILIO_FROM_NUMBER: ${TWILIO_FROM_NUMBER}
+    networks:
+      - rental-net
     restart: unless-stopped
 
   # ─────────────────────────────────────────────
