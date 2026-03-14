@@ -1,5 +1,6 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
+from datetime import date
 import os
 
 app = Flask(__name__)
@@ -24,16 +25,41 @@ def health():
     return jsonify({"status": "ok"}), 200
 
 
+# GET vs POST — method-based dispatch; no ordering conflict
 @app.route("/api/drivers/<string:uid>", methods=["GET"])
 def get_driver(uid):
-    # Phase 1 stub — real logic in Phase 3
-    return jsonify({"status": "ok", "data": {}, "message": "Phase 1 stub"}), 200
+    if db is None:
+        return jsonify({"status": "error", "message": "Firestore unavailable"}), 500
+
+    # drivers are keyed by license_number (not uid); must use .where() query, NOT .document(uid)
+    docs = list(db.collection("drivers").where("uid", "==", uid).stream())
+    if not docs:
+        return jsonify({"status": "error", "message": "Driver not found"}), 404
+
+    return jsonify({"status": "ok", "data": docs[0].to_dict()}), 200
 
 
 @app.route("/api/drivers/validate", methods=["POST"])
 def validate_driver():
-    # Phase 1 stub — real logic in Phase 3
-    return jsonify({"status": "ok", "valid": True, "message": "Phase 1 stub"}), 200
+    if db is None:
+        return jsonify({"status": "error", "message": "Firestore unavailable"}), 500
+
+    body = request.get_json(silent=True) or {}
+    license_number = body.get("license_number")
+    if not license_number:
+        return jsonify({"status": "error", "message": "Missing required field: license_number"}), 400
+
+    doc = db.collection("drivers").document(license_number).get()
+    if not doc.exists:
+        # validate returns 200 even for invalid — it is a validation query, not a resource lookup
+        return jsonify({"valid": False, "reason": "driver not found"}), 200
+
+    driver = doc.to_dict()
+    expiry = date.fromisoformat(driver["license_expiry"])
+    if expiry <= date.today():
+        return jsonify({"valid": False, "reason": "license expired"}), 200
+
+    return jsonify({"valid": True}), 200
 
 
 if __name__ == "__main__":
