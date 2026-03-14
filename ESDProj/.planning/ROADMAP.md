@@ -44,7 +44,7 @@ Plans:
 ### Phase 2: Frontend
 **Goal**: Users can open the web app, authenticate with Firebase, and navigate to all four views — with every API call passing through Kong with the JWT attached.
 **Depends on**: Phase 1
-**Requirements**: FE-01, FE-02, FE-03, FE-04, FE-05, FE-06, KONG-10
+**Requirements**: FE-01, FE-02, FE-03, FE-04, FE-05, FE-06, KONG-10, WS-02
 **Success Criteria** (what must be TRUE):
   1. The Vue.js app loads at http://localhost:8080 in a browser
   2. A user can sign up and log in with email/password via Firebase Auth; unauthenticated users are redirected to Login
@@ -52,7 +52,8 @@ Plans:
   4. Google Maps renders a map widget inside BookCar and ReportIncident views
   5. All outbound API calls in the browser use the /api/* prefix (Kong proxy), and the Authorization header contains the Firebase JWT
   6. Kong JWT plugin is enabled on all routes; valid Firebase JWTs pass, missing/invalid JWTs return 401
-**Plans**: 6 plans
+  7. ServiceDashboard view connects to websocket_server via Socket.IO on load and receives live report updates
+**Plans**: 7 plans
 
 Plans:
 - [ ] 02-01-PLAN.md — Wave 1: Vue 3 Vite scaffold, firebase.js, axios.js, router, auth store, NavBar, multi-stage Dockerfile
@@ -61,6 +62,7 @@ Plans:
 - [ ] 02-04-PLAN.md — Wave 2: ReportIncidentView (GMapMap + geolocation + Places) + ServiceDashboardView (Socket.IO)
 - [ ] 02-05-PLAN.md — Wave 2: Kong JWT plugin config (RS256 consumer + jwt plugin on all 9 routes)
 - [ ] 02-06-PLAN.md — Wave 3: Browser verification checkpoint (all 6 success criteria)
+- [ ] 02-07-PLAN.md — Wave 4 (gap closure): Fix WS-02 traceability — update requirement text to ServiceDashboard, claim WS-02
 
 ### Phase 3: Atomic Services
 **Goal**: Every atomic microservice is running and correctly reading from and writing to Firestore, with all documented REST endpoints functional.
@@ -93,8 +95,8 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. twilio_wrapper subscribes to "report_topic" with key "report.new", sends SMS to service team via Twilio, then HTTP POSTs to websocket_server
   2. activity_log subscribes to "report_topic" with key "report.new", persists audit event to Firestore, then HTTP POSTs to websocket_server
-  3. websocket_server emits a Socket.IO event to the connected ReportIncident frontend client on receiving POST /notify
-  4. Vue.js ReportIncident view connects to websocket_server on load and displays the real-time update when the event arrives
+  3. websocket_server emits a Socket.IO `report_update` event to connected frontend clients on receiving POST /notify
+  4. Vue.js ServiceDashboard view (connected to websocket_server on load) receives and displays the real-time update when the event arrives
   5. Both AMQP consumers start successfully even if RabbitMQ is not yet ready at container startup (pika retry logic)
 **Plans**: TBD
 
@@ -117,7 +119,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/5 | Complete    | 2026-03-13 |
-| 2. Frontend | 2/6 | In Progress|  |
+| 2. Frontend | 2/7 | In Progress|  |
 | 3. Atomic Services | 0/TBD | Not started | - |
 | 4. Composite Services | 0/TBD | Not started | - |
 | 5. Async Workers | 0/TBD | Not started | - |
