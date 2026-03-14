@@ -13,7 +13,7 @@ The project builds a 18-container microservices system delivering three user-fac
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - Docker Compose scaffold, Kong gateway, RabbitMQ, and seed data (completed 2026-03-13)
-- [x] **Phase 2: Frontend** - Vue.js 3 app with Firebase Auth, Google Maps, and Kong-routed API calls (completed 2026-03-14)
+- [x] **Phase 2: Frontend** - Vue.js 3 app with Firebase Auth, Google Maps, and Kong-routed API calls (completed 2026-03-14)
 - [ ] **Phase 3: Atomic Services** - Five atomic Flask microservices (vehicle, booking, driver, report, pricing)
 - [ ] **Phase 4: Composite Services** - Four composite orchestration services covering all three user scenarios
 - [ ] **Phase 5: Async Workers** - AMQP workers for Twilio SMS and WebSocket real-time push; openai_wrapper is HTTP
@@ -74,7 +74,14 @@ Plans:
   3. GET /api/drivers/<uid> returns driver record; POST /api/drivers validates license number + expiry and returns `{ valid: true/false }`
   4. POST /api/reports creates an incident report; GET /api/reports/<id> returns it; PUT /api/reports/<id>/evaluation and PUT /api/reports/<id>/resolution update it; GET /api/reports/pending returns unresolved reports
   5. GET /api/pricing returns hardcoded rates (sedan $12.50/hr, suv $18/hr, van $15/hr); GET /api/pricing/calculate returns a calculated total for given type and hours
-**Plans**: TBD
+**Plans**: 5 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Wave 1: verify_phase3.sh smoke test scaffold (all 17 requirements, direct ports 5001-5005)
+- [ ] 03-02-PLAN.md — Wave 2: vehicle_service — 3 routes (GET list, GET by ID, PUT status) with Firestore
+- [ ] 03-03-PLAN.md — Wave 2: pricing_service (calculate + policy, no Firestore) + driver_service (UID lookup + validate)
+- [ ] 03-04-PLAN.md — Wave 3: booking_service — 5 routes with Firestore (most complex, critical for Phase 4)
+- [ ] 03-05-PLAN.md — Wave 3: report_service — 5 routes with Firestore + report document schema
 
 ### Phase 4: Composite Services
 **Goal**: All three user-facing scenarios execute end-to-end — a car can be booked and paid for, a booking can be cancelled with a policy-based Stripe refund, and an incident can be submitted — with correct rollback and error handling at each step.
@@ -120,7 +127,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/5 | Complete    | 2026-03-13 |
 | 2. Frontend | 7/7 | Complete   | 2026-03-14 |
-| 3. Atomic Services | 0/TBD | Not started | - |
+| 3. Atomic Services | 0/5 | Not started | - |
 | 4. Composite Services | 0/TBD | Not started | - |
 | 5. Async Workers | 0/TBD | Not started | - |
 | 6. Kubernetes | 0/TBD | Not started | - |
