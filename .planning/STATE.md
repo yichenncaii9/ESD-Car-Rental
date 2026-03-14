@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 04-04-PLAN.md (book_car composite orchestration with rollback)
-last_updated: "2026-03-14T18:37:54.978Z"
+stopped_at: Completed 04-06-PLAN.md (report_issue + resolve_issue composite orchestration)
+last_updated: "2026-03-14T18:38:38.737Z"
 last_activity: 2026-03-13 — Roadmap created; ready to begin Phase 1 planning
 progress:
   total_phases: 6
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 18
-  completed_plans: 20
+  completed_plans: 21
   percent: 94
 ---
 
@@ -117,6 +117,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04-composite-services P01 | 2 | 2 tasks | 9 files |
 | Phase 04-composite-services P04 | 300 | 1 tasks | 1 files |
 | Phase 04-composite-services P05 | 2 | 1 tasks | 1 files |
+| Phase 04-composite-services P06 | 10 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -167,6 +168,8 @@ Recent decisions affecting current work:
 - [Phase 04-composite-services]: book_car: Vehicle locked before Stripe charge to prevent double-booking race; driver license_number fetched via GET /drivers/{uid} before POST /drivers/validate; pricing_service uses query params not JSON body; booking_service failure triggers best-effort rollback (refund + unlock) with exceptions logged not re-raised
 - [Phase 04-composite-services]: Firestore direct write for refund_status: booking_service PUT /status only updates status field; composite writes refund_status:pending_manual directly to Firestore when Stripe fails
 - [Phase 04-composite-services]: 0% refund conservative fallback: pricing_service unreachable defaults to 0% refund to avoid over-refunding
+- [Phase 04-composite-services]: report_issue Phase A severity held from openai_wrapper response variable — not re-fetched from Firestore; ensures COMP-10 response shape without extra read
+- [Phase 04-composite-services]: resolve_issue sms_status written directly to Firestore on Twilio failure — report_service PUT /resolution cannot set sms_status field
 
 ### Pending Todos
 
@@ -184,6 +187,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-14T18:37:54.017Z
-Stopped at: Completed 04-04-PLAN.md (book_car composite orchestration with rollback)
+Last session: 2026-03-14T18:38:38.735Z
+Stopped at: Completed 04-06-PLAN.md (report_issue + resolve_issue composite orchestration)
 Resume file: None
