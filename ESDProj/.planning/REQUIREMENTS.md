@@ -17,10 +17,10 @@
 ### Frontend
 
 - [x] **FE-01**: Vue.js 3 (Vite) app serves on port 8080
-- [ ] **FE-02**: User can log in and sign up via Firebase Auth (email/password)
+- [x] **FE-02**: User can log in and sign up via Firebase Auth (email/password)
 - [x] **FE-03**: Firebase JWT is attached to every API request via Axios interceptor
 - [x] **FE-04**: Router has routes for Login, BookCar, CancelBooking, ReportIncident, ServiceDashboard
-- [ ] **FE-05**: Google Maps JS SDK renders map in BookCar and ReportIncident views
+- [x] **FE-05**: Google Maps JS SDK renders map in BookCar and ReportIncident views
 - [x] **FE-06**: All API calls route through Kong at /api/* (not direct to services)
 
 ### API Gateway (Kong)
@@ -34,7 +34,7 @@
 - [ ] **KONG-07**: Kong routes /api/drivers to driver_service:5003
 - [x] **KONG-08**: Kong routes /api/reports to report_service:5004
 - [x] **KONG-09**: Kong routes /api/pricing to pricing_service:5005
-- [ ] **KONG-10**: Kong jwt plugin validates Firebase JWT on all routes
+- [x] **KONG-10**: Kong jwt plugin validates Firebase JWT on all routes
 - [x] **KONG-11**: Kong cors and rate-limiting plugins enabled
 
 ### Composite Services
@@ -146,7 +146,7 @@
 | KONG-07 | Phase 1 - Foundation | Pending |
 | KONG-08 | Phase 1 - Foundation | Complete |
 | KONG-09 | Phase 1 - Foundation | Complete |
-| KONG-10 | Phase 1 - Foundation | Pending |
+| KONG-10 | Phase 1 - Foundation | Complete |
 | KONG-11 | Phase 1 - Foundation | Complete |
 | DATA-01 | Phase 1 - Foundation | Pending |
 | DATA-02 | Phase 1 - Foundation | Pending |
@@ -154,10 +154,10 @@
 | DRV-01 | Phase 3 - Atomic Services | Pending |
 | DRV-02 | Phase 3 - Atomic Services | Pending |
 | FE-01 | Phase 2 - Frontend | Complete |
-| FE-02 | Phase 2 - Frontend | Pending |
+| FE-02 | Phase 2 - Frontend | Complete |
 | FE-03 | Phase 2 - Frontend | Complete |
 | FE-04 | Phase 2 - Frontend | Complete |
-| FE-05 | Phase 2 - Frontend | Pending |
+| FE-05 | Phase 2 - Frontend | Complete |
 | FE-06 | Phase 2 - Frontend | Complete |
 | VEH-01 | Phase 3 - Atomic Services | Pending |
 | VEH-02 | Phase 3 - Atomic Services | Pending |
