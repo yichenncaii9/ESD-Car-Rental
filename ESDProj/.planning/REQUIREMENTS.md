@@ -53,23 +53,23 @@
 
 ### Atomic Services
 
-- [ ] **VEH-01**: vehicle_service GET /vehicles returns list of available vehicles with filters
-- [ ] **VEH-02**: vehicle_service GET /vehicles/<id> returns single vehicle
-- [ ] **VEH-03**: vehicle_service PUT /vehicles/<id>/status updates vehicle status in Firestore
-- [ ] **BOOK-01**: booking_service POST /bookings creates booking in Firestore
-- [ ] **BOOK-02**: booking_service GET /bookings/<id> returns booking
-- [ ] **BOOK-03**: booking_service GET /bookings/user/<uid>/active returns active booking for user
-- [ ] **BOOK-04**: booking_service GET /bookings/user/<uid> returns all bookings for user
-- [ ] **BOOK-05**: booking_service PUT /bookings/<id>/status updates booking status
-- [ ] **DRV-01**: driver_service GET /drivers/<uid> returns driver record from Firestore
-- [ ] **DRV-02**: driver_service POST /drivers/validate checks license number + expiry and returns `{ valid: true/false, reason? }`
-- [ ] **RPT-01**: report_service POST /reports creates incident report in Firestore
-- [ ] **RPT-02**: report_service GET /reports/<id> returns report
-- [ ] **RPT-03**: report_service PUT /reports/<id>/evaluation updates with AI diagnosis
-- [ ] **RPT-04**: report_service PUT /reports/<id>/resolution updates with team resolution
-- [ ] **RPT-05**: report_service GET /reports/pending returns all pending reports for service dashboard
-- [ ] **PRICE-01**: pricing_service GET /pricing returns all pricing rules (hardcoded: sedan $12.50/hr, suv $18/hr, van $15/hr)
-- [ ] **PRICE-02**: pricing_service GET /pricing/calculate returns calculated price (query: vehicle_type, hours)
+- [x] **VEH-01**: vehicle_service GET /vehicles returns list of available vehicles with filters
+- [x] **VEH-02**: vehicle_service GET /vehicles/<id> returns single vehicle
+- [x] **VEH-03**: vehicle_service PUT /vehicles/<id>/status updates vehicle status in Firestore
+- [x] **BOOK-01**: booking_service POST /bookings creates booking in Firestore
+- [x] **BOOK-02**: booking_service GET /bookings/<id> returns booking
+- [x] **BOOK-03**: booking_service GET /bookings/user/<uid>/active returns active booking for user
+- [x] **BOOK-04**: booking_service GET /bookings/user/<uid> returns all bookings for user
+- [x] **BOOK-05**: booking_service PUT /bookings/<id>/status updates booking status
+- [x] **DRV-01**: driver_service GET /drivers/<uid> returns driver record from Firestore
+- [x] **DRV-02**: driver_service POST /drivers/validate checks license number + expiry and returns `{ valid: true/false, reason? }`
+- [x] **RPT-01**: report_service POST /reports creates incident report in Firestore
+- [x] **RPT-02**: report_service GET /reports/<id> returns report
+- [x] **RPT-03**: report_service PUT /reports/<id>/evaluation updates with AI diagnosis
+- [x] **RPT-04**: report_service PUT /reports/<id>/resolution updates with team resolution
+- [x] **RPT-05**: report_service GET /reports/pending returns all pending reports for service dashboard
+- [x] **PRICE-01**: pricing_service GET /pricing returns all pricing rules (hardcoded: sedan $12.50/hr, suv $18/hr, van $15/hr)
+- [x] **PRICE-02**: pricing_service GET /pricing/calculate returns calculated price (query: vehicle_type, hours)
 
 ### AMQP Workers
 
@@ -151,29 +151,29 @@
 | DATA-01 | Phase 1 - Foundation | Pending |
 | DATA-02 | Phase 1 - Foundation | Pending |
 | DATA-03 | Phase 1 - Foundation | Pending |
-| DRV-01 | Phase 3 - Atomic Services | Pending |
-| DRV-02 | Phase 3 - Atomic Services | Pending |
+| DRV-01 | Phase 3 - Atomic Services | Complete |
+| DRV-02 | Phase 3 - Atomic Services | Complete |
 | FE-01 | Phase 2 - Frontend | Complete |
 | FE-02 | Phase 2 - Frontend | Complete |
 | FE-03 | Phase 2 - Frontend | Complete |
 | FE-04 | Phase 2 - Frontend | Complete |
 | FE-05 | Phase 2 - Frontend | Complete |
 | FE-06 | Phase 2 - Frontend | Complete |
-| VEH-01 | Phase 3 - Atomic Services | Pending |
-| VEH-02 | Phase 3 - Atomic Services | Pending |
-| VEH-03 | Phase 3 - Atomic Services | Pending |
-| BOOK-01 | Phase 3 - Atomic Services | Pending |
-| BOOK-02 | Phase 3 - Atomic Services | Pending |
-| BOOK-03 | Phase 3 - Atomic Services | Pending |
-| BOOK-04 | Phase 3 - Atomic Services | Pending |
-| BOOK-05 | Phase 3 - Atomic Services | Pending |
-| RPT-01 | Phase 3 - Atomic Services | Pending |
-| RPT-02 | Phase 3 - Atomic Services | Pending |
-| RPT-03 | Phase 3 - Atomic Services | Pending |
-| RPT-04 | Phase 3 - Atomic Services | Pending |
-| RPT-05 | Phase 3 - Atomic Services | Pending |
-| PRICE-01 | Phase 3 - Atomic Services | Pending |
-| PRICE-02 | Phase 3 - Atomic Services | Pending |
+| VEH-01 | Phase 3 - Atomic Services | Complete |
+| VEH-02 | Phase 3 - Atomic Services | Complete |
+| VEH-03 | Phase 3 - Atomic Services | Complete |
+| BOOK-01 | Phase 3 - Atomic Services | Complete |
+| BOOK-02 | Phase 3 - Atomic Services | Complete |
+| BOOK-03 | Phase 3 - Atomic Services | Complete |
+| BOOK-04 | Phase 3 - Atomic Services | Complete |
+| BOOK-05 | Phase 3 - Atomic Services | Complete |
+| RPT-01 | Phase 3 - Atomic Services | Complete |
+| RPT-02 | Phase 3 - Atomic Services | Complete |
+| RPT-03 | Phase 3 - Atomic Services | Complete |
+| RPT-04 | Phase 3 - Atomic Services | Complete |
+| RPT-05 | Phase 3 - Atomic Services | Complete |
+| PRICE-01 | Phase 3 - Atomic Services | Complete |
+| PRICE-02 | Phase 3 - Atomic Services | Complete |
 | COMP-01 | Phase 4 - Composite Services | Pending |
 | COMP-02 | Phase 4 - Composite Services | Pending |
 | COMP-03 | Phase 4 - Composite Services | Pending |

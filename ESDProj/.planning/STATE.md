@@ -3,11 +3,27 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
+stopped_at: Completed 03-01-PLAN.md (verify_phase3.sh smoke test scaffold)
+last_updated: "2026-03-14T11:29:59.684Z"
+last_activity: 2026-03-13 — Roadmap created; ready to begin Phase 1 planning
+progress:
+  total_phases: 6
+  completed_phases: 2
+  total_plans: 17
+  completed_plans: 13
+  percent: 76
+---
+
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: planning
 stopped_at: Completed quick-1-PLAN.md (clean up project directory)
 last_updated: "2026-03-14T11:00:00.000Z"
 last_activity: 2026-03-13 — Roadmap created; ready to begin Phase 1 planning
 progress:
-  total_phases: 6
+  [████████░░] 76%
   completed_phases: 2
   total_plans: 12
   completed_plans: 12
@@ -59,6 +75,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 02-frontend P03 | 2 | 2 tasks | 2 files |
 | Phase 02-frontend P06 | 10 | 2 tasks | 1 files |
 | Phase 02-frontend P07 | 2 | 1 tasks | 1 files |
+| Phase 03-atomic-services P01 | 1 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -89,6 +106,8 @@ Recent decisions affecting current work:
 - [Phase 02-frontend]: CancelBookingView implements dual-mode: auto-fetch active booking on mount, manual booking ID lookup as fallback — auto-fetch failure is silent
 - [Phase 02-frontend]: Kong RS256 public key rotation handled in-place — Firebase rotated its signing key mid-phase, kong.yml updated with new kid and Kong restarted
 - [Phase 02-frontend]: WS-02 requirement text corrected to ServiceDashboard view — matches CONTEXT.md locked decision; traceability split across Phase 2 (client) and Phase 5 (server)
+- [Phase 03-atomic-services]: Tests call services on direct localhost ports 5001-5005, not Kong (8000), to bypass JWT validation during development
+- [Phase 03-atomic-services]: Pre-test setup block captures TEST_BOOKING_ID and TEST_REPORT_ID at verify_phase3.sh top for reuse across dependent checks
 
 ### Pending Todos
 
@@ -106,6 +125,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-14T11:00:00.000Z
-Stopped at: Completed quick task 1: clean up project directory — deleted ESD-Car-Rental nested clone, hardened .gitignore
+Last session: 2026-03-14T11:29:59.682Z
+Stopped at: Completed 03-01-PLAN.md (verify_phase3.sh smoke test scaffold)
 Resume file: None
