@@ -98,8 +98,14 @@ None yet.
 
 None yet.
 
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 1 | clean up project directory: investigate ESD-Car-Rental path and delete if duplicate | 2026-03-14 | 2dbc25c | [1-clean-up-project-directory-investigate-e](./quick/1-clean-up-project-directory-investigate-e/) |
+
 ## Session Continuity
 
 Last session: 2026-03-14T11:00:00.000Z
-Stopped at: Completed quick-1-PLAN.md (clean up project directory)
+Stopped at: Completed quick task 1: clean up project directory — deleted ESD-Car-Rental nested clone, hardened .gitignore
 Resume file: None
