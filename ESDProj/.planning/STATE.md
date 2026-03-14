@@ -3,11 +3,27 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
+stopped_at: Completed 03-05-PLAN.md (report_service Firestore routes)
+last_updated: "2026-03-14T11:47:59.628Z"
+last_activity: 2026-03-13 — Roadmap created; ready to begin Phase 1 planning
+progress:
+  total_phases: 6
+  completed_phases: 1
+  total_plans: 12
+  completed_plans: 15
+  percent: 100
+---
+
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: planning
 stopped_at: Completed 03-02-PLAN.md (vehicle_service Firestore routes)
 last_updated: "2026-03-14T11:35:11.086Z"
 last_activity: 2026-03-13 — Roadmap created; ready to begin Phase 1 planning
 progress:
-  total_phases: 6
+  [██████████] 100%
   completed_phases: 2
   total_plans: 17
   completed_plans: 14
@@ -78,6 +94,8 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 03-atomic-services P01 | 1 | 1 tasks | 1 files |
 | Phase 03-atomic-services P02 | 3 | 1 tasks | 2 files |
 | Phase 03-atomic-services P03 | 2 | 2 tasks | 2 files |
+| Phase 03-atomic-services P05 | 2 | 1 tasks | 1 files |
+| Phase 03-atomic-services P04 | 2 | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -114,6 +132,10 @@ Recent decisions affecting current work:
 - [Phase 03-atomic-services]: db=None guard returns 500 on all vehicle_service routes — allows container startup without Firebase credentials during dev
 - [Phase 03-atomic-services]: driver_service validate returns HTTP 200 for invalid licenses — validation query, not resource lookup; callers inspect valid field
 - [Phase 03-atomic-services]: DRV verify checks fail due to pre-existing Firestore API disabled in GCP esd-rental-car; code is correct per spec
+- [Phase 03-atomic-services]: Report document schema fixed in report_service (11 fields): Phase 4 composites report_issue/resolve_issue must conform to it
+- [Phase 03-atomic-services]: GET /api/reports/pending uses Firestore != inequality with Python-side fallback filter to avoid blocking on composite index creation
+- [Phase 03-atomic-services]: RPT verify checks fail due to pre-existing Firestore API disabled in GCP esd-rental-car; code is correct per spec (same as DRV)
+- [Phase 03-atomic-services]: booking_service route order corrected: user/<uid>/active and user/<uid> registered before wildcard GET <booking_id> to prevent Flask routing conflicts
 
 ### Pending Todos
 
@@ -131,6 +153,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-14T11:39:27Z
-Stopped at: Completed 03-03-PLAN.md (pricing_service + driver_service routes)
+Last session: 2026-03-14T11:47:50.482Z
+Stopped at: Completed 03-05-PLAN.md (report_service Firestore routes)
 Resume file: None
