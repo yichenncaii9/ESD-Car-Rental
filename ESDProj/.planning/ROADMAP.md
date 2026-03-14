@@ -13,7 +13,7 @@ The project builds a 18-container microservices system delivering three user-fac
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Foundation** - Docker Compose scaffold, Kong gateway, RabbitMQ, and seed data (completed 2026-03-13)
-- [ ] **Phase 2: Frontend** - Vue.js 3 app with Firebase Auth, Google Maps, and Kong-routed API calls
+- [x] **Phase 2: Frontend** - Vue.js 3 app with Firebase Auth, Google Maps, and Kong-routed API calls (completed 2026-03-14)
 - [ ] **Phase 3: Atomic Services** - Five atomic Flask microservices (vehicle, booking, driver, report, pricing)
 - [ ] **Phase 4: Composite Services** - Four composite orchestration services covering all three user scenarios
 - [ ] **Phase 5: Async Workers** - AMQP workers for Twilio SMS and WebSocket real-time push; openai_wrapper is HTTP
@@ -119,7 +119,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation | 3/5 | Complete    | 2026-03-13 |
-| 2. Frontend | 2/7 | In Progress|  |
+| 2. Frontend | 7/7 | Complete   | 2026-03-14 |
 | 3. Atomic Services | 0/TBD | Not started | - |
 | 4. Composite Services | 0/TBD | Not started | - |
 | 5. Async Workers | 0/TBD | Not started | - |
