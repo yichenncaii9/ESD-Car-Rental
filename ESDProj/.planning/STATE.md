@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 01-foundation/01-02-PLAN.md
-last_updated: "2026-03-13T15:43:58.495Z"
+stopped_at: Completed 02-frontend-02-01-PLAN.md
+last_updated: "2026-03-14T06:32:11.799Z"
 last_activity: 2026-03-13 — Roadmap created; ready to begin Phase 1 planning
 progress:
   total_phases: 6
   completed_phases: 1
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 11
+  completed_plans: 6
   percent: 0
 ---
 
@@ -53,6 +53,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 01-foundation P01 | 1 | 2 tasks | 3 files |
 | Phase 01-foundation P03 | 1 | 1 tasks | 1 files |
 | Phase 01-foundation P02 | 1 | 1 tasks | 1 files |
+| Phase 02-frontend P01 | 4 | 3 tasks | 18 files |
 
 ## Accumulated Context
 
@@ -72,6 +73,9 @@ Recent decisions affecting current work:
 - [Phase 01-foundation]: KONG-10 JWT plugin deferred to Phase 2 — all routes open in Phase 1, comment added to kong.yml
 - [Phase 01-foundation]: pricing_service has no Firebase volume — hardcoded rates, no Firestore dependency
 - [Phase 01-foundation]: Workers (twilio_wrapper, activity_log) have no exposed ports — AMQP consumers only, depend on RabbitMQ service_healthy
+- [Phase 02-frontend]: VITE_* vars passed as Docker build ARGs (not runtime env) — Vite bakes them statically into the JS bundle
+- [Phase 02-frontend]: Router guard uses onAuthStateChanged promise wrapper — avoids race condition where auth.currentUser is null before Firebase initializes on page refresh
+- [Phase 02-frontend]: axios.js baseURL uses VITE_API_BASE_URL || http://localhost:8000 — all view calls use full /api/* paths to Kong proxy
 
 ### Pending Todos
 
@@ -83,6 +87,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-13T15:30:40.300Z
-Stopped at: Completed 01-foundation/01-02-PLAN.md
+Last session: 2026-03-14T06:32:11.797Z
+Stopped at: Completed 02-frontend-02-01-PLAN.md
 Resume file: None

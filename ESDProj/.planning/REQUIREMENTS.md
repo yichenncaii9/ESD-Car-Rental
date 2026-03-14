@@ -16,12 +16,12 @@
 
 ### Frontend
 
-- [ ] **FE-01**: Vue.js 3 (Vite) app serves on port 8080
+- [x] **FE-01**: Vue.js 3 (Vite) app serves on port 8080
 - [ ] **FE-02**: User can log in and sign up via Firebase Auth (email/password)
-- [ ] **FE-03**: Firebase JWT is attached to every API request via Axios interceptor
-- [ ] **FE-04**: Router has routes for Login, BookCar, CancelBooking, ReportIncident, ServiceDashboard
+- [x] **FE-03**: Firebase JWT is attached to every API request via Axios interceptor
+- [x] **FE-04**: Router has routes for Login, BookCar, CancelBooking, ReportIncident, ServiceDashboard
 - [ ] **FE-05**: Google Maps JS SDK renders map in BookCar and ReportIncident views
-- [ ] **FE-06**: All API calls route through Kong at /api/* (not direct to services)
+- [x] **FE-06**: All API calls route through Kong at /api/* (not direct to services)
 
 ### API Gateway (Kong)
 
@@ -153,12 +153,12 @@
 | DATA-03 | Phase 1 - Foundation | Pending |
 | DRV-01 | Phase 3 - Atomic Services | Pending |
 | DRV-02 | Phase 3 - Atomic Services | Pending |
-| FE-01 | Phase 2 - Frontend | Pending |
+| FE-01 | Phase 2 - Frontend | Complete |
 | FE-02 | Phase 2 - Frontend | Pending |
-| FE-03 | Phase 2 - Frontend | Pending |
-| FE-04 | Phase 2 - Frontend | Pending |
+| FE-03 | Phase 2 - Frontend | Complete |
+| FE-04 | Phase 2 - Frontend | Complete |
 | FE-05 | Phase 2 - Frontend | Pending |
-| FE-06 | Phase 2 - Frontend | Pending |
+| FE-06 | Phase 2 - Frontend | Complete |
 | VEH-01 | Phase 3 - Atomic Services | Pending |
 | VEH-02 | Phase 3 - Atomic Services | Pending |
 | VEH-03 | Phase 3 - Atomic Services | Pending |
