@@ -113,7 +113,12 @@ Plans:
   3. websocket_server emits a Socket.IO `report_update` event to connected frontend clients on receiving POST /notify
   4. Vue.js ServiceDashboard view (connected to websocket_server on load) receives and displays the real-time update when the event arrives
   5. Both AMQP consumers start successfully even if RabbitMQ is not yet ready at container startup (pika retry logic)
-**Plans**: TBD
+**Plans**: 3 plans
+
+Plans:
+- [ ] 05-01-PLAN.md — Wave 1: verify_phase5.sh smoke test script + websocket_server /notify upgrade (real socketio.emit)
+- [ ] 05-02-PLAN.md — Wave 2: activity_log AMQP consumer (pika + Firestore write + websocket notify)
+- [ ] 05-03-PLAN.md — Wave 2: twilio_wrapper AMQP consumer (pika + Twilio SMS mock failover + websocket notify)
 
 ### Phase 6: Kubernetes
 **Goal**: All 18 services run cleanly in a Kubernetes cluster using declarative manifests — same Dockerfiles and Flask apps as Docker Compose, just different orchestration. docker-compose.yml is preserved for local dev.
@@ -137,5 +142,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Frontend | 7/7 | Complete   | 2026-03-14 |
 | 3. Atomic Services | 5/5 | Complete   | 2026-03-14 |
 | 4. Composite Services | 3/6 | In Progress|  |
-| 5. Async Workers | 0/TBD | Not started | - |
+| 5. Async Workers | 0/3 | Not started | - |
 | 6. Kubernetes | 0/TBD | Not started | - |
