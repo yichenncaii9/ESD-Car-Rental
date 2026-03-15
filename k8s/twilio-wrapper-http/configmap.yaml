@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: twilio-wrapper-http-config
+  namespace: default
+data:
+  PORT: "6203"

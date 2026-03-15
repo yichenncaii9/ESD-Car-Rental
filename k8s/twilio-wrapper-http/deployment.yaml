@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: twilio-wrapper-http
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: twilio-wrapper-http
+  template:
+    metadata:
+      labels:
+        app: twilio-wrapper-http
+    spec:
+      containers:
+        - name: twilio-wrapper-http
+          image: esd-twilio-wrapper-http:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 6203
+          env:
+            - name: TWILIO_ACCOUNT_SID
+              valueFrom:
+                secretKeyRef:
+                  name: api-keys
+                  key: TWILIO_ACCOUNT_SID
+            - name: TWILIO_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: api-keys
+                  key: TWILIO_AUTH_TOKEN
+            - name: TWILIO_FROM_NUMBER
+              valueFrom:
+                secretKeyRef:
+                  name: api-keys
+                  key: TWILIO_FROM_NUMBER
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 6203
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 6203
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            failureThreshold: 5

@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: websocket-server
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: websocket-server
+  template:
+    metadata:
+      labels:
+        app: websocket-server
+    spec:
+      containers:
+        - name: websocket-server
+          image: esd-websocket-server:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 6100
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 6100
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 6100
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            failureThreshold: 5
