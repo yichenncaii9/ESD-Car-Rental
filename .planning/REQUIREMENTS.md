@@ -73,10 +73,10 @@
 
 ### AMQP Workers
 
-- [ ] **WORK-01**: twilio_wrapper subscribes to "twilio_queue" bound to "report_topic" with key "report.new"
-- [ ] **WORK-02**: twilio_wrapper sends SMS to service team via Twilio API (severity already persisted in Phase A)
-- [ ] **WORK-03**: twilio_wrapper HTTP POSTs `{ report_id, event: "sms_sent" }` to websocket_server after SMS is sent
-- [ ] **WORK-04**: twilio_wrapper HTTP POSTs update payload to websocket_server after SMS is sent
+- [x] **WORK-01**: twilio_wrapper subscribes to "twilio_queue" bound to "report_topic" with key "report.new"
+- [x] **WORK-02**: twilio_wrapper sends SMS to service team via Twilio API (severity already persisted in Phase A)
+- [x] **WORK-03**: twilio_wrapper HTTP POSTs `{ report_id, event: "sms_sent" }` to websocket_server after SMS is sent
+- [x] **WORK-04**: twilio_wrapper HTTP POSTs update payload to websocket_server after SMS is sent
 - [x] **WORK-05**: activity_log subscribes to "activity_queue" bound to "report_topic" with key "report.new"
 - [x] **WORK-06**: activity_log persists event to Firestore for audit trail and HTTP POSTs update payload to websocket_server
 - [x] **WORK-07**: Both workers have pika retry logic (RabbitMQ may not be ready at startup)
@@ -185,10 +185,10 @@
 | COMP-09 | Phase 4 - Composite Services | Complete |
 | COMP-10 | Phase 4 - Composite Services | Complete |
 | COMP-11 | Phase 4 - Composite Services | Complete |
-| WORK-01 | Phase 5 - Async Workers | Pending |
-| WORK-02 | Phase 5 - Async Workers | Pending |
-| WORK-03 | Phase 5 - Async Workers | Pending |
-| WORK-04 | Phase 5 - Async Workers | Pending |
+| WORK-01 | Phase 5 - Async Workers | Complete |
+| WORK-02 | Phase 5 - Async Workers | Complete |
+| WORK-03 | Phase 5 - Async Workers | Complete |
+| WORK-04 | Phase 5 - Async Workers | Complete |
 | WORK-05 | Phase 5 - Async Workers | Complete |
 | WORK-06 | Phase 5 - Async Workers | Complete |
 | WORK-07 | Phase 5 - Async Workers | Complete |
