@@ -1,4 +1,3 @@
-# websocket_server/app.py — Phase 1 stub
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_socketio import SocketIO
@@ -16,10 +15,13 @@ def health():
 
 @app.route("/notify", methods=["POST"])
 def notify():
-    # Phase 1 stub — real Socket.IO emit in Phase 5
     data = request.get_json() or {}
     print(f"[websocket_server] /notify received: {data}")
-    return jsonify({"status": "ok", "message": "Phase 1 stub"}), 200
+    socketio.emit("report_update", {
+        **data,
+        "id": data.get("report_id")   # REQUIRED — ServiceDashboardView findIndex matches r.id === data.id
+    })
+    return jsonify({"status": "ok"}), 200
 
 
 @socketio.on("connect")
