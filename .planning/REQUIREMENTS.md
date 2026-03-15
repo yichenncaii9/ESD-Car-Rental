@@ -74,7 +74,7 @@
 ### AMQP Workers
 
 - [x] **WORK-01**: twilio_wrapper subscribes to "twilio_queue" bound to "report_topic" with key "report.new"
-- [x] **WORK-02**: twilio_wrapper sends SMS to service team via Twilio API (severity already persisted in Phase A)
+- [x] **WORK-02**: twilio_wrapper sends SMS to service team via SMU Notification API (smuedu-dev.outsystemsenterprise.com; mock fallback on failure)
 - [x] **WORK-03**: twilio_wrapper HTTP POSTs `{ report_id, event: "sms_sent" }` to websocket_server after SMS is sent
 - [x] **WORK-04**: twilio_wrapper HTTP POSTs update payload to websocket_server after SMS is sent
 - [x] **WORK-05**: activity_log subscribes to "activity_queue" bound to "report_topic" with key "report.new"

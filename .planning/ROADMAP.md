@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Foundation** - Docker Compose scaffold, Kong gateway, RabbitMQ, and seed data (completed 2026-03-13)
 - [x] **Phase 2: Frontend** - Vue.js 3 app with Firebase Auth, Google Maps, and Kong-routed API calls (completed 2026-03-14)
 - [x] **Phase 3: Atomic Services** - Five atomic Flask microservices (vehicle, booking, driver, report, pricing) (completed 2026-03-14)
-- [ ] **Phase 4: Composite Services** - Four composite orchestration services covering all three user scenarios
+- [x] **Phase 4: Composite Services** - Four composite orchestration services covering all three user scenarios (completed 2026-03-15)
 - [x] **Phase 5: Async Workers** - AMQP workers for Twilio SMS and WebSocket real-time push; openai_wrapper is HTTP (completed 2026-03-15)
 - [ ] **Phase 6: Kubernetes** - Convert all 18 services to Kubernetes manifests for production deployment
 
@@ -35,11 +35,11 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 5 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Wave 0: verify_phase1.sh smoke test script + .gitignore + .env.example
-- [ ] 01-02-PLAN.md — Wave 1: docker-compose.yml for all 18 containers on rental-net
+- [x] 01-01-PLAN.md — Wave 0: verify_phase1.sh smoke test script + .gitignore + .env.example
+- [x] 01-02-PLAN.md — Wave 1: docker-compose.yml for all 18 containers on rental-net
 - [ ] 01-03-PLAN.md — Wave 1: kong.yml DB-less config with 9 routes, CORS, rate-limiting
-- [ ] 01-04-PLAN.md — Wave 1: Flask stub services for composite (4) + atomic (5) layers
-- [ ] 01-05-PLAN.md — Wave 1: Flask stubs for workers/wrappers/websocket_server + frontend placeholder + seed_data.py
+- [x] 01-04-PLAN.md — Wave 1: Flask stub services for composite (4) + atomic (5) layers
+- [x] 01-05-PLAN.md — Wave 1: Flask stubs for workers/wrappers/websocket_server + frontend placeholder + seed_data.py
 
 ### Phase 2: Frontend
 **Goal**: Users can open the web app, authenticate with Firebase, and navigate to all four views — with every API call passing through Kong with the JWT attached.
@@ -56,13 +56,13 @@ Plans:
 **Plans**: 7 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Wave 1: Vue 3 Vite scaffold, firebase.js, axios.js, router, auth store, NavBar, multi-stage Dockerfile
-- [ ] 02-02-PLAN.md — Wave 2: LoginView with Firebase Auth login/signup toggle, inline errors, spinner
+- [x] 02-01-PLAN.md — Wave 1: Vue 3 Vite scaffold, firebase.js, axios.js, router, auth store, NavBar, multi-stage Dockerfile
+- [x] 02-02-PLAN.md — Wave 2: LoginView with Firebase Auth login/signup toggle, inline errors, spinner
 - [ ] 02-03-PLAN.md — Wave 2: BookCarView (GMapMap + vehicle markers) + CancelBookingView
-- [ ] 02-04-PLAN.md — Wave 2: ReportIncidentView (GMapMap + geolocation + Places) + ServiceDashboardView (Socket.IO)
-- [ ] 02-05-PLAN.md — Wave 2: Kong JWT plugin config (RS256 consumer + jwt plugin on all 9 routes)
-- [ ] 02-06-PLAN.md — Wave 3: Browser verification checkpoint (all 6 success criteria)
-- [ ] 02-07-PLAN.md — Wave 4 (gap closure): Fix WS-02 traceability — update requirement text to ServiceDashboard, claim WS-02
+- [x] 02-04-PLAN.md — Wave 2: ReportIncidentView (GMapMap + geolocation + Places) + ServiceDashboardView (Socket.IO)
+- [x] 02-05-PLAN.md — Wave 2: Kong JWT plugin config (RS256 consumer + jwt plugin on all 9 routes)
+- [x] 02-06-PLAN.md — Wave 3: Browser verification checkpoint (all 6 success criteria)
+- [x] 02-07-PLAN.md — Wave 4 (gap closure): Fix WS-02 traceability — update requirement text to ServiceDashboard, claim WS-02
 
 ### Phase 3: Atomic Services
 **Goal**: Every atomic microservice is running and correctly reading from and writing to Firestore, with all documented REST endpoints functional.
@@ -77,11 +77,11 @@ Plans:
 **Plans**: 5 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Wave 1: verify_phase3.sh smoke test scaffold (all 17 requirements, direct ports 5001-5005)
-- [ ] 03-02-PLAN.md — Wave 2: vehicle_service — 3 routes (GET list, GET by ID, PUT status) with Firestore
+- [x] 03-01-PLAN.md — Wave 1: verify_phase3.sh smoke test scaffold (all 17 requirements, direct ports 5001-5005)
+- [x] 03-02-PLAN.md — Wave 2: vehicle_service — 3 routes (GET list, GET by ID, PUT status) with Firestore
 - [x] 03-03-PLAN.md — Wave 2: pricing_service (calculate + policy, no Firestore) + driver_service (UID lookup + validate)
-- [ ] 03-04-PLAN.md — Wave 3: booking_service — 5 routes with Firestore (most complex, critical for Phase 4)
-- [ ] 03-05-PLAN.md — Wave 3: report_service — 5 routes with Firestore + report document schema
+- [x] 03-04-PLAN.md — Wave 3: booking_service — 5 routes with Firestore (most complex, critical for Phase 4)
+- [x] 03-05-PLAN.md — Wave 3: report_service — 5 routes with Firestore + report document schema
 
 ### Phase 4: Composite Services
 **Goal**: All three user-facing scenarios execute end-to-end — a car can be booked and paid for, a booking can be cancelled with a policy-based Stripe refund, and an incident can be submitted — with correct rollback and error handling at each step.
@@ -96,12 +96,12 @@ Plans:
 **Plans**: 6 plans
 
 Plans:
-- [ ] 04-01-PLAN.md — Wave 1: verify_phase4.sh + wrappers/twilio_wrapper HTTP Flask service (port 6203) + SDK requirements.txt updates
-- [ ] 04-02-PLAN.md — Wave 1: stripe_wrapper real Stripe SDK with mock failover (charge + refund)
-- [ ] 04-03-PLAN.md — Wave 1: openai_wrapper GPT-3.5-turbo severity classification + googlemaps_wrapper reverse geocode, both with mock failover
-- [ ] 04-04-PLAN.md — Wave 2: book_car composite (driver → vehicle lock → pricing → stripe → booking, with rollback)
-- [ ] 04-05-PLAN.md — Wave 2: cancel_booking composite (policy-based refund, Stripe graceful failure, Firestore direct write)
-- [ ] 04-06-PLAN.md — Wave 2: report_issue composite (Phase A + B inline RabbitMQ) + resolve_issue composite (Twilio SMS graceful failure)
+- [x] 04-01-PLAN.md — Wave 1: verify_phase4.sh + wrappers/twilio_wrapper HTTP Flask service (port 6203) + SDK requirements.txt updates
+- [x] 04-02-PLAN.md — Wave 1: stripe_wrapper real Stripe SDK with mock failover (charge + refund)
+- [x] 04-03-PLAN.md — Wave 1: openai_wrapper GPT-3.5-turbo severity classification + googlemaps_wrapper reverse geocode, both with mock failover
+- [x] 04-04-PLAN.md — Wave 2: book_car composite (driver → vehicle lock → pricing → stripe → booking, with rollback)
+- [x] 04-05-PLAN.md — Wave 2: cancel_booking composite (policy-based refund, Stripe graceful failure, Firestore direct write)
+- [x] 04-06-PLAN.md — Wave 2: report_issue composite (Phase A + B inline RabbitMQ) + resolve_issue composite (Twilio SMS graceful failure)
 
 ### Phase 5: Async Workers
 **Goal**: After an incident is submitted and Phase A returns synchronously, the AMQP consumers process the event asynchronously — twilio_wrapper sends SMS, activity_log persists the audit event, and websocket_server pushes real-time updates to the frontend. openai_wrapper is HTTP-only (called in Phase A, not here).
@@ -116,9 +116,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 05-01-PLAN.md — Wave 1: verify_phase5.sh smoke test script + websocket_server /notify upgrade (real socketio.emit)
-- [ ] 05-02-PLAN.md — Wave 2: activity_log AMQP consumer (pika + Firestore write + websocket notify)
-- [ ] 05-03-PLAN.md — Wave 2: twilio_wrapper AMQP consumer (pika + Twilio SMS mock failover + websocket notify)
+- [x] 05-01-PLAN.md — Wave 1: verify_phase5.sh smoke test script + websocket_server /notify upgrade (real socketio.emit)
+- [x] 05-02-PLAN.md — Wave 2: activity_log AMQP consumer (pika + Firestore write + websocket notify)
+- [x] 05-03-PLAN.md — Wave 2: twilio_wrapper AMQP consumer (pika + SMU Notification API SMS + websocket notify)
 
 ### Phase 6: Kubernetes
 **Goal**: All 18 services run cleanly in a Kubernetes cluster using declarative manifests — same Dockerfiles and Flask apps as Docker Compose, just different orchestration. docker-compose.yml is preserved for local dev.
@@ -134,13 +134,13 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
+Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation | 3/5 | Complete    | 2026-03-13 |
-| 2. Frontend | 7/7 | Complete   | 2026-03-14 |
+| 1. Foundation | 4/5 | Complete    | 2026-03-13 |
+| 2. Frontend | 6/7 | In Progress |  |
 | 3. Atomic Services | 5/5 | Complete   | 2026-03-14 |
-| 4. Composite Services | 3/6 | In Progress|  |
+| 4. Composite Services | 6/6 | Complete | 2026-03-15 |
 | 5. Async Workers | 3/3 | Complete   | 2026-03-15 |
 | 6. Kubernetes | 0/TBD | Not started | - |
