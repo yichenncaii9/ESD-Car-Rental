@@ -96,13 +96,13 @@
 
 ### Kubernetes
 
-- [ ] **K8S-01**: Every service has a Kubernetes Deployment + Service + ConfigMap manifest (k8s/ directory)
+- [x] **K8S-01**: Every service has a Kubernetes Deployment + Service + ConfigMap manifest (k8s/ directory)
 - [ ] **K8S-02**: RabbitMQ runs as a Kubernetes StatefulSet with persistent volume
 - [ ] **K8S-03**: Kong runs as a standalone Kubernetes pod or Ingress controller, routing all /api/* paths
-- [ ] **K8S-04**: firebase-service-account.json stored as a Kubernetes Secret, mounted read-only into all Firestore-connected pods
-- [ ] **K8S-05**: All .env values migrated to Kubernetes ConfigMaps (non-sensitive) and Secrets (API keys)
-- [ ] **K8S-06**: docker-compose.yml is preserved and functional for local development
-- [ ] **K8S-07**: All three scenarios (book-car, cancel-booking, report-issue) work end-to-end in the Kubernetes cluster
+- [x] **K8S-04**: firebase-service-account.json stored as a Kubernetes Secret, mounted read-only into all Firestore-connected pods
+- [x] **K8S-05**: All .env values migrated to Kubernetes ConfigMaps (non-sensitive) and Secrets (API keys)
+- [x] **K8S-06**: docker-compose.yml is preserved and functional for local development
+- [x] **K8S-07**: All three scenarios (book-car, cancel-booking, report-issue) work end-to-end in the Kubernetes cluster
 
 ## v2 Requirements
 
@@ -196,13 +196,13 @@
 | WS-02 | Phase 2 - Frontend (client: Socket.IO in ServiceDashboardView) / Phase 5 - Async Workers (server: websocket_server /notify endpoint) | Complete |
 | WS-03 | Phase 5 - Async Workers | Complete |
 | WS-04 | Phase 5 - Async Workers | Complete |
-| K8S-01 | Phase 6 - Kubernetes | Pending |
+| K8S-01 | Phase 6 - Kubernetes | Complete |
 | K8S-02 | Phase 6 - Kubernetes | Pending |
 | K8S-03 | Phase 6 - Kubernetes | Pending |
-| K8S-04 | Phase 6 - Kubernetes | Pending |
-| K8S-05 | Phase 6 - Kubernetes | Pending |
-| K8S-06 | Phase 6 - Kubernetes | Pending |
-| K8S-07 | Phase 6 - Kubernetes | Pending |
+| K8S-04 | Phase 6 - Kubernetes | Complete |
+| K8S-05 | Phase 6 - Kubernetes | Complete |
+| K8S-06 | Phase 6 - Kubernetes | Complete |
+| K8S-07 | Phase 6 - Kubernetes | Complete |
 
 **Coverage:**
 - v1 requirements: 63 total (added DRV-01, DRV-02, KONG-07/drivers, DATA-02/driver seed; container count 18; Scenario 3 Phase A/B flow corrected)
