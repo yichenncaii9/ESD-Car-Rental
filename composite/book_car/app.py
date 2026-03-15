@@ -47,7 +47,7 @@ def book_car():
     r = requests.get(f"http://{DRIVER_HOST}/api/drivers/{user_uid}", timeout=5)
     if r.status_code != 200:
         return jsonify({"status": "error", "message": f"Driver not found: {r.json().get('message', 'unknown')}"}), 400
-    driver = r.json()
+    driver = r.json().get("data", r.json())
     license_number = driver.get("license_number")
     if not license_number:
         return jsonify({"status": "error", "message": "Driver has no license_number on record"}), 400
@@ -68,7 +68,7 @@ def book_car():
         return jsonify({"status": "error", "message": "Vehicle not found"}), 404
     if r.status_code != 200:
         return jsonify({"status": "error", "message": "Vehicle service error"}), 502
-    vehicle = r.json()
+    vehicle = r.json().get("data", r.json())
     if vehicle.get("status") != "available":
         return jsonify({"status": "error", "message": "Vehicle not available"}), 409
 
@@ -86,7 +86,7 @@ def book_car():
         requests.put(f"http://{VEHICLE_HOST}/api/vehicles/{vehicle_id}/status",
                      json={"status": "available"}, timeout=5)
         return jsonify({"status": "error", "message": "Pricing service error"}), 502
-    total_price = r.json().get("total_price", 0)
+    total_price = r.json().get("total", 0)
 
     # Step 6: Charge Stripe
     r = requests.post(f"http://{STRIPE_HOST}/api/stripe/charge",

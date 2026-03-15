@@ -44,7 +44,7 @@ def cancel_booking():
         return jsonify({"status": "error", "message": "Booking not found"}), 404
     if r.status_code != 200:
         return jsonify({"status": "error", "message": "Booking service error"}), 502
-    booking = r.json()
+    booking = r.json().get("data", r.json())
 
     # Step 2: Validate booking is cancellable (COMP-03)
     booking_status = booking.get("status")
@@ -71,7 +71,7 @@ def cancel_booking():
     try:
         r = requests.get(f"http://{PRICING_HOST}/api/pricing/policy", timeout=5)
         if r.status_code == 200:
-            tiers = r.json()
+            tiers = r.json().get("tiers", [])
             # Tiers expected: [{"hours_before": 24, "refund_percent": 100}, ...]
             # Sort descending by hours_before so the highest threshold is checked first
             for tier in sorted(tiers, key=lambda t: t.get("hours_before", 0), reverse=True):
