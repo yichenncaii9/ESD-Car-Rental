@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-stopped_at: Completed 06-02-PLAN.md (RabbitMQ StatefulSet + Kong ConfigMap/Deployment/Service)
-last_updated: "2026-03-15T06:11:39.222Z"
+stopped_at: Completed 06-04-PLAN.md (wrapper services and websocket-server K8s manifests)
+last_updated: "2026-03-15T06:15:18.974Z"
 last_activity: 2026-03-15 — Phase 5 (Async Workers) complete; SMU Notification API replaces Twilio in workers/twilio_wrapper
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 27
-  completed_plans: 26
+  completed_plans: 28
 ---
 
 ---
@@ -90,6 +90,8 @@ Progress: [█████████░] 83%
 | Phase 05-async-workers P03 | 3min | 2 tasks | 2 files |
 | Phase 06-kubernetes P01 | 5min | 3 tasks | 5 files |
 | Phase 06-kubernetes P02 | 2min | 2 tasks | 5 files |
+| Phase 06-kubernetes P04 | 2min | 2 tasks | 15 files |
+| Phase 06-kubernetes P03 | 5min | 2 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -150,6 +152,8 @@ Recent decisions affecting current work:
 - [Phase 06-kubernetes]: Separate k8s/kong/kong.yml from root kong.yml — K8s DNS requires hyphens in service names, Docker Compose uses underscores; two files keep both environments working
 - [Phase 06-kubernetes]: kubectl --dry-run=client -o yaml | kubectl apply -f - for idempotent K8s secret creation; firebase-sa uses --from-file, api-keys uses --from-literal
 - [Phase 06-kubernetes]: K8s YAML validated via python3 yaml.safe_load when no cluster is available; kubectl dry-run requires live API server
+- [Phase 06-kubernetes]: Validated YAML with python3 yaml.safe_load instead of kubectl --dry-run=client because no live API server available in dev environment
+- [Phase 06-kubernetes]: websocket-server ConfigMap contains PORT: 6100 for K8S-01 compliance even though Deployment does not mount it
 
 ### Pending Todos
 
@@ -167,6 +171,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-15T06:11:39.220Z
-Stopped at: Completed 06-02-PLAN.md (RabbitMQ StatefulSet + Kong ConfigMap/Deployment/Service)
+Last session: 2026-03-15T06:15:12.700Z
+Stopped at: Completed 06-04-PLAN.md (wrapper services and websocket-server K8s manifests)
 Resume file: None
