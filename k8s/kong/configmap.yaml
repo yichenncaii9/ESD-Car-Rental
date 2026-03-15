@@ -25,25 +25,15 @@ data:
           - algorithm: RS256
             key: "https://securetoken.google.com/esd-rental-car"
             rsa_public_key: |
-              -----BEGIN CERTIFICATE-----
-              MIIDHDCCAgSgAwIBAgIIaaHiOfVOKI0wDQYJKoZIhvcNAQEFBQAwMTEvMC0GA1UE
-              Awwmc2VjdXJldG9rZW4uc3lzdGVtLmdzZXJ2aWNlYWNjb3VudC5jb20wHhcNMjYw
-              MzEzMjAzNzQ2WhcNMjYwMzMwMDg1MjQ2WjAxMS8wLQYDVQQDDCZzZWN1cmV0b2tl
-              bi5zeXN0ZW0uZ3NlcnZpY2VhY2NvdW50LmNvbTCCASIwDQYJKoZIhvcNAQEBBQAD
-              ggEPADCCAQoCggEBAOzVnYodl48T01v4dax7UqSnTRV83nhp/T73CWU696FyOkQC
-              ZPEy09SPkv54R8yhAcCGpOa8vQaeTEfF6yYDvNWRvdoVjgXbLmWSzlAQBznOT6n+
-              sEyFg1Or19J6rOV8rl1iRVapRK3+aD0zpIsB0vyaGs6YqJIyqHRk98xoEE1gW6q1
-              QGkVx0oOf+v/iydr8+mvLmWJmJ1571FSQAuGX6Jh3fcBye2e1rHJ7BAXc38Xhpsk
-              YmdneSyxpd/8/HK/5vIJZ84wwBu5mjQe7/QONjo4zpYkKe+UYw8dbORzvdG5U2uv
-              9u6VnTaYWEiJ0WvcL67VGctw9BcR0OEvEjEuOHUCAwEAAaM4MDYwDAYDVR0TAQH/
-              BAIwADAOBgNVHQ8BAf8EBAMCB4AwFgYDVR0lAQH/BAwwCgYIKwYBBQUHAwIwDQYJ
-              KoZIhvcNAQEFBQADggEBAA+snTU4YxppfEL4l9WOyZCPu2tck+HP9uhMe127rra5
-              SPxQOvC8sAY1NRcVqCSvLt+USSkLKRuUzcRVxJ16IwSzjBzfAUZYSnIEb6du3/Ry
-              D9FYlsIbcQHp0KWuIqhljgVgXSeDPN09Ts95VdqbwnWC3cYBTYqSAJdl2a0ArDWG
-              8xcRdT5EHYXR3tInqZQAW0qem7OejbH6Va/d7qLoNEHwWeMjdB9pbukusMPZTsBO
-              GCqDTjtd7ik6f4QSAmkoXHNNfEnX1aV4opkscTBSEnV9T4+O7vzj2JmevPffTD5w
-              bTb8fwnzJU6M0DdufVrHz3C/5rP04YaLvL6Q3cwc4qQ=
-              -----END CERTIFICATE-----
+              -----BEGIN PUBLIC KEY-----
+              MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA7NWdih2XjxPTW/h1rHtS
+              pKdNFXzeeGn9PvcJZTr3oXI6RAJk8TLT1I+S/nhHzKEBwIak5ry9Bp5MR8XrJgO8
+              1ZG92hWOBdsuZZLOUBAHOc5Pqf6wTIWDU6vX0nqs5XyuXWJFVqlErf5oPTOkiwHS
+              /JoazpiokjKodGT3zGgQTWBbqrVAaRXHSg5/6/+LJ2vz6a8uZYmYnXnvUVJAC4Zf
+              omHd9wHJ7Z7WscnsEBdzfxeGmyRiZ2d5LLGl3/z8cr/m8glnzjDAG7maNB7v9A42
+              OjjOliQp75RjDx1s5HO90blTa6/27pWdNphYSInRa9wvrtUZy3D0FxHQ4S8SMS44
+              dQIDAQAB
+              -----END PUBLIC KEY-----
             secret: "not-used-for-rs256"
 
     services:
