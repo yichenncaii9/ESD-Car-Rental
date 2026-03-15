@@ -1,0 +1,429 @@
+_format_version: "3.0"
+_transform: true
+
+# KONG-10: Firebase JWT validation
+# Algorithm: RS256
+# key_claim_name: iss — Kong looks up consumer by matching jwt_secrets.key against the token's iss claim
+# Firebase iss format: https://securetoken.google.com/{PROJECT_ID}
+# Public key source: https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com
+# KEY ROTATION NOTE: Firebase rotates RS256 keys every ~7 days.
+# If Kong starts returning 401 with "Invalid signature", re-fetch the key from the x509 endpoint above,
+# match the kid in your token's header, and update rsa_public_key in this file.
+# For production, use the kong-oidc plugin instead (supports JWKS auto-fetch).
+# Key embedded: kid=732ca96713b1dd172385084ce9f4381ad00cece4 (expires 2026-03-30)
+
+consumers:
+  - username: firebase-frontend
+    jwt_secrets:
+      - algorithm: RS256
+        key: "https://securetoken.google.com/esd-rental-car"
+        rsa_public_key: |
+          -----BEGIN CERTIFICATE-----
+          MIIDHDCCAgSgAwIBAgIIaaHiOfVOKI0wDQYJKoZIhvcNAQEFBQAwMTEvMC0GA1UE
+          Awwmc2VjdXJldG9rZW4uc3lzdGVtLmdzZXJ2aWNlYWNjb3VudC5jb20wHhcNMjYw
+          MzEzMjAzNzQ2WhcNMjYwMzMwMDg1MjQ2WjAxMS8wLQYDVQQDDCZzZWN1cmV0b2tl
+          bi5zeXN0ZW0uZ3NlcnZpY2VhY2NvdW50LmNvbTCCASIwDQYJKoZIhvcNAQEBBQAD
+          ggEPADCCAQoCggEBAOzVnYodl48T01v4dax7UqSnTRV83nhp/T73CWU696FyOkQC
+          ZPEy09SPkv54R8yhAcCGpOa8vQaeTEfF6yYDvNWRvdoVjgXbLmWSzlAQBznOT6n+
+          sEyFg1Or19J6rOV8rl1iRVapRK3+aD0zpIsB0vyaGs6YqJIyqHRk98xoEE1gW6q1
+          QGkVx0oOf+v/iydr8+mvLmWJmJ1571FSQAuGX6Jh3fcBye2e1rHJ7BAXc38Xhpsk
+          YmdneSyxpd/8/HK/5vIJZ84wwBu5mjQe7/QONjo4zpYkKe+UYw8dbORzvdG5U2uv
+          9u6VnTaYWEiJ0WvcL67VGctw9BcR0OEvEjEuOHUCAwEAAaM4MDYwDAYDVR0TAQH/
+          BAIwADAOBgNVHQ8BAf8EBAMCB4AwFgYDVR0lAQH/BAwwCgYIKwYBBQUHAwIwDQYJ
+          KoZIhvcNAQEFBQADggEBAA+snTU4YxppfEL4l9WOyZCPu2tck+HP9uhMe127rra5
+          SPxQOvC8sAY1NRcVqCSvLt+USSkLKRuUzcRVxJ16IwSzjBzfAUZYSnIEb6du3/Ry
+          D9FYlsIbcQHp0KWuIqhljgVgXSeDPN09Ts95VdqbwnWC3cYBTYqSAJdl2a0ArDWG
+          8xcRdT5EHYXR3tInqZQAW0qem7OejbH6Va/d7qLoNEHwWeMjdB9pbukusMPZTsBO
+          GCqDTjtd7ik6f4QSAmkoXHNNfEnX1aV4opkscTBSEnV9T4+O7vzj2JmevPffTD5w
+          bTb8fwnzJU6M0DdufVrHz3C/5rP04YaLvL6Q3cwc4qQ=
+          -----END CERTIFICATE-----
+        secret: "not-used-for-rs256"
+
+services:
+
+  # 1. book-car composite
+  - name: book-car-service
+    url: http://composite-book-car:6001
+    routes:
+      - name: book-car-route
+        paths:
+          - /api/book-car
+        strip_path: false
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        plugins:
+          - name: cors
+            config:
+              origins:
+                - "http://localhost:8080"
+              methods:
+                - GET
+                - POST
+                - PUT
+                - DELETE
+                - OPTIONS
+              headers:
+                - Authorization
+                - Content-Type
+                - X-Requested-With
+              exposed_headers:
+                - X-Auth-Token
+              credentials: true
+              max_age: 3600
+          - name: rate-limiting
+            config:
+              minute: 60
+              policy: local
+          - name: jwt
+            config:
+              key_claim_name: iss
+              claims_to_verify:
+                - exp
+
+  # 2. cancel-booking composite
+  - name: cancel-booking-service
+    url: http://composite-cancel-booking:6002
+    routes:
+      - name: cancel-booking-route
+        paths:
+          - /api/cancel-booking
+        strip_path: false
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        plugins:
+          - name: cors
+            config:
+              origins:
+                - "http://localhost:8080"
+              methods:
+                - GET
+                - POST
+                - PUT
+                - DELETE
+                - OPTIONS
+              headers:
+                - Authorization
+                - Content-Type
+                - X-Requested-With
+              exposed_headers:
+                - X-Auth-Token
+              credentials: true
+              max_age: 3600
+          - name: rate-limiting
+            config:
+              minute: 60
+              policy: local
+          - name: jwt
+            config:
+              key_claim_name: iss
+              claims_to_verify:
+                - exp
+
+  # 3. report-issue composite
+  - name: report-issue-service
+    url: http://composite-report-issue:6003
+    routes:
+      - name: report-issue-route
+        paths:
+          - /api/report-issue
+        strip_path: false
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        plugins:
+          - name: cors
+            config:
+              origins:
+                - "http://localhost:8080"
+              methods:
+                - GET
+                - POST
+                - PUT
+                - DELETE
+                - OPTIONS
+              headers:
+                - Authorization
+                - Content-Type
+                - X-Requested-With
+              exposed_headers:
+                - X-Auth-Token
+              credentials: true
+              max_age: 3600
+          - name: rate-limiting
+            config:
+              minute: 60
+              policy: local
+          - name: jwt
+            config:
+              key_claim_name: iss
+              claims_to_verify:
+                - exp
+
+  # 4. resolve-issue composite
+  - name: resolve-issue-service
+    url: http://composite-resolve-issue:6004
+    routes:
+      - name: resolve-issue-route
+        paths:
+          - /api/resolve-issue
+        strip_path: false
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        plugins:
+          - name: cors
+            config:
+              origins:
+                - "http://localhost:8080"
+              methods:
+                - GET
+                - POST
+                - PUT
+                - DELETE
+                - OPTIONS
+              headers:
+                - Authorization
+                - Content-Type
+                - X-Requested-With
+              exposed_headers:
+                - X-Auth-Token
+              credentials: true
+              max_age: 3600
+          - name: rate-limiting
+            config:
+              minute: 60
+              policy: local
+          - name: jwt
+            config:
+              key_claim_name: iss
+              claims_to_verify:
+                - exp
+
+  # 5. vehicle atomic service
+  - name: vehicle-service
+    url: http://vehicle-service:5001
+    routes:
+      - name: vehicles-route
+        paths:
+          - /api/vehicles
+        strip_path: false
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        plugins:
+          - name: cors
+            config:
+              origins:
+                - "http://localhost:8080"
+              methods:
+                - GET
+                - POST
+                - PUT
+                - DELETE
+                - OPTIONS
+              headers:
+                - Authorization
+                - Content-Type
+                - X-Requested-With
+              exposed_headers:
+                - X-Auth-Token
+              credentials: true
+              max_age: 3600
+          - name: rate-limiting
+            config:
+              minute: 60
+              policy: local
+          - name: jwt
+            config:
+              key_claim_name: iss
+              claims_to_verify:
+                - exp
+
+  # 6. booking atomic service
+  - name: booking-service
+    url: http://booking-service:5002
+    routes:
+      - name: bookings-route
+        paths:
+          - /api/bookings
+        strip_path: false
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        plugins:
+          - name: cors
+            config:
+              origins:
+                - "http://localhost:8080"
+              methods:
+                - GET
+                - POST
+                - PUT
+                - DELETE
+                - OPTIONS
+              headers:
+                - Authorization
+                - Content-Type
+                - X-Requested-With
+              exposed_headers:
+                - X-Auth-Token
+              credentials: true
+              max_age: 3600
+          - name: rate-limiting
+            config:
+              minute: 60
+              policy: local
+          - name: jwt
+            config:
+              key_claim_name: iss
+              claims_to_verify:
+                - exp
+
+  # 7. driver atomic service
+  - name: driver-service
+    url: http://driver-service:5003
+    routes:
+      - name: drivers-route
+        paths:
+          - /api/drivers
+        strip_path: false
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        plugins:
+          - name: cors
+            config:
+              origins:
+                - "http://localhost:8080"
+              methods:
+                - GET
+                - POST
+                - PUT
+                - DELETE
+                - OPTIONS
+              headers:
+                - Authorization
+                - Content-Type
+                - X-Requested-With
+              exposed_headers:
+                - X-Auth-Token
+              credentials: true
+              max_age: 3600
+          - name: rate-limiting
+            config:
+              minute: 60
+              policy: local
+          - name: jwt
+            config:
+              key_claim_name: iss
+              claims_to_verify:
+                - exp
+
+  # 8. report atomic service
+  - name: report-service
+    url: http://report-service:5004
+    routes:
+      - name: reports-route
+        paths:
+          - /api/reports
+        strip_path: false
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        plugins:
+          - name: cors
+            config:
+              origins:
+                - "http://localhost:8080"
+              methods:
+                - GET
+                - POST
+                - PUT
+                - DELETE
+                - OPTIONS
+              headers:
+                - Authorization
+                - Content-Type
+                - X-Requested-With
+              exposed_headers:
+                - X-Auth-Token
+              credentials: true
+              max_age: 3600
+          - name: rate-limiting
+            config:
+              minute: 60
+              policy: local
+          - name: jwt
+            config:
+              key_claim_name: iss
+              claims_to_verify:
+                - exp
+
+  # 9. pricing atomic service
+  - name: pricing-service
+    url: http://pricing-service:5005
+    routes:
+      - name: pricing-route
+        paths:
+          - /api/pricing
+        strip_path: false
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        plugins:
+          - name: cors
+            config:
+              origins:
+                - "http://localhost:8080"
+              methods:
+                - GET
+                - POST
+                - PUT
+                - DELETE
+                - OPTIONS
+              headers:
+                - Authorization
+                - Content-Type
+                - X-Requested-With
+              exposed_headers:
+                - X-Auth-Token
+              credentials: true
+              max_age: 3600
+          - name: rate-limiting
+            config:
+              minute: 60
+              policy: local
+          - name: jwt
+            config:
+              key_claim_name: iss
+              claims_to_verify:
+                - exp

@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: common-config
+  namespace: default
+data:
+  RABBITMQ_HOST: "rabbitmq"
+  RABBITMQ_PORT: "5672"
+  WEBSOCKET_SERVER_URL: "http://websocket-server:6100"
+  TWILIO_WRAPPER_HOST: "twilio-wrapper-http:6203"
