@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: googlemaps-wrapper
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: googlemaps-wrapper
+  template:
+    metadata:
+      labels:
+        app: googlemaps-wrapper
+    spec:
+      containers:
+        - name: googlemaps-wrapper
+          image: esd-googlemaps-wrapper:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 6201
+          env:
+            - name: GOOGLE_MAPS_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: api-keys
+                  key: GOOGLE_MAPS_API_KEY
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 6201
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 6201
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            failureThreshold: 5

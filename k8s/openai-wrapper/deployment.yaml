@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openai-wrapper
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: openai-wrapper
+  template:
+    metadata:
+      labels:
+        app: openai-wrapper
+    spec:
+      containers:
+        - name: openai-wrapper
+          image: esd-openai-wrapper:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 6200
+          env:
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: api-keys
+                  key: OPENAI_API_KEY
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 6200
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 6200
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            failureThreshold: 5

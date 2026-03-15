@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stripe-wrapper
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stripe-wrapper
+  template:
+    metadata:
+      labels:
+        app: stripe-wrapper
+    spec:
+      containers:
+        - name: stripe-wrapper
+          image: esd-stripe-wrapper:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 6202
+          env:
+            - name: STRIPE_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: api-keys
+                  key: STRIPE_SECRET_KEY
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 6202
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 6202
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            failureThreshold: 5
