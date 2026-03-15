@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Frontend** - Vue.js 3 app with Firebase Auth, Google Maps, and Kong-routed API calls (completed 2026-03-14)
 - [x] **Phase 3: Atomic Services** - Five atomic Flask microservices (vehicle, booking, driver, report, pricing) (completed 2026-03-14)
 - [x] **Phase 4: Composite Services** - Four composite orchestration services covering all three user scenarios (completed 2026-03-15)
-- [x] **Phase 5: Async Workers** - AMQP workers for Twilio SMS and WebSocket real-time push; openai_wrapper is HTTP (completed 2026-03-15)
+- [x] **Phase 5: Async Workers** - AMQP workers for Twilio SMS and WebSocket real-time push; openai_wrapper is HTTP (completed 2026-03-15)
 - [ ] **Phase 6: Kubernetes** - Convert all 18 services to Kubernetes manifests for production deployment
 
 ## Phase Details
@@ -125,11 +125,19 @@ Plans:
 **Depends on**: Phase 5 (all 3 scenarios must work on Docker Compose first)
 **Requirements**: K8S-01, K8S-02, K8S-03, K8S-04, K8S-05, K8S-06, K8S-07
 **Success Criteria** (what must be TRUE):
-  1. All 17 pods start cleanly in the Kubernetes cluster with no CrashLoopBackOff errors
-  2. POST /api/book-car, /api/cancel-booking, and /api/report-issue all succeed end-to-end via Kong Ingress in the cluster
+  1. All 18 pods start cleanly in the Kubernetes cluster with no CrashLoopBackOff errors
+  2. POST /api/book-car, /api/cancel-booking, and /api/report-issue all succeed end-to-end via Kong in the cluster
   3. firebase-service-account.json is stored as a Kubernetes Secret and mounted into pods — not present in any manifest YAML
   4. `docker-compose up` still works for local dev (unchanged)
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [ ] 06-01-PLAN.md — Wave 1: scripts/build-images.sh + scripts/setup-secrets.sh + scripts/verify_phase6.sh + k8s/shared/common-configmap.yaml + k8s/kong/kong.yml (hyphenated)
+- [ ] 06-02-PLAN.md — Wave 2: RabbitMQ StatefulSet + Service + Kong Deployment + ConfigMap + NodePort Service
+- [ ] 06-03-PLAN.md — Wave 3: Atomic service manifests (vehicle, booking, driver, report, pricing — 15 files)
+- [ ] 06-04-PLAN.md — Wave 3: Wrapper + websocket-server manifests (openai, googlemaps, stripe, twilio-http, websocket — 14 files)
+- [ ] 06-05-PLAN.md — Wave 4: Composite service manifests + worker Deployments (composites x4, twilio-worker, activity-log — 15 files)
+- [ ] 06-06-PLAN.md — Wave 5: Frontend manifest + apply all manifests + smoke test checkpoint
 
 ## Progress
 
@@ -143,4 +151,4 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6
 | 3. Atomic Services | 5/5 | Complete   | 2026-03-14 |
 | 4. Composite Services | 6/6 | Complete | 2026-03-15 |
 | 5. Async Workers | 3/3 | Complete   | 2026-03-15 |
-| 6. Kubernetes | 0/TBD | Not started | - |
+| 6. Kubernetes | 0/6 | Not started | - |
