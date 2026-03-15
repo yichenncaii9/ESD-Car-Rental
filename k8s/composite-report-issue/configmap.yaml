@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: composite-report-issue-config
+  namespace: default
+data:
+  FIREBASE_PROJECT_ID: "esd-rental-car"
+  PORT: "6003"
+  # Hyphenated K8s Service names — override app.py underscore defaults
+  BOOKING_SERVICE_HOST: "booking-service:5002"
+  REPORT_SERVICE_HOST: "report-service:5004"
+  MAPS_WRAPPER_HOST: "googlemaps-wrapper:6201"
+  OPENAI_WRAPPER_HOST: "openai-wrapper:6200"
+  # NOTE: RABBITMQ_HOST and RABBITMQ_PORT come from common-config in Deployment (not here)

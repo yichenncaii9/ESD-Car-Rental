@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: composite-cancel-booking
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: composite-cancel-booking
+  template:
+    metadata:
+      labels:
+        app: composite-cancel-booking
+    spec:
+      containers:
+        - name: composite-cancel-booking
+          image: esd-composite-cancel-booking:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 6002
+          env:
+            - name: FIREBASE_PROJECT_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: composite-cancel-booking-config
+                  key: FIREBASE_PROJECT_ID
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /secrets/firebase-service-account.json
+            - name: BOOKING_SERVICE_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: composite-cancel-booking-config
+                  key: BOOKING_SERVICE_HOST
+            - name: VEHICLE_SERVICE_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: composite-cancel-booking-config
+                  key: VEHICLE_SERVICE_HOST
+            - name: PRICING_SERVICE_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: composite-cancel-booking-config
+                  key: PRICING_SERVICE_HOST
+            - name: STRIPE_WRAPPER_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: composite-cancel-booking-config
+                  key: STRIPE_WRAPPER_HOST
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 6002
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 6002
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            failureThreshold: 5
+          volumeMounts:
+            - name: firebase-sa
+              mountPath: /secrets
+              readOnly: true
+      volumes:
+        - name: firebase-sa
+          secret:
+            secretName: firebase-sa

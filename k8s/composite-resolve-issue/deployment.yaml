@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: composite-resolve-issue
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: composite-resolve-issue
+  template:
+    metadata:
+      labels:
+        app: composite-resolve-issue
+    spec:
+      containers:
+        - name: composite-resolve-issue
+          image: esd-composite-resolve-issue:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 6004
+          env:
+            - name: FIREBASE_PROJECT_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: composite-resolve-issue-config
+                  key: FIREBASE_PROJECT_ID
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /secrets/firebase-service-account.json
+            - name: REPORT_SERVICE_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: composite-resolve-issue-config
+                  key: REPORT_SERVICE_HOST
+            - name: TWILIO_WRAPPER_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: common-config
+                  key: TWILIO_WRAPPER_HOST
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 6004
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 6004
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            failureThreshold: 5
+          volumeMounts:
+            - name: firebase-sa
+              mountPath: /secrets
+              readOnly: true
+      volumes:
+        - name: firebase-sa
+          secret:
+            secretName: firebase-sa

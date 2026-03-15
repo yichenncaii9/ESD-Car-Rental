@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: composite-report-issue
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: composite-report-issue
+  template:
+    metadata:
+      labels:
+        app: composite-report-issue
+    spec:
+      containers:
+        - name: composite-report-issue
+          image: esd-composite-report-issue:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 6003
+          env:
+            - name: FIREBASE_PROJECT_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: composite-report-issue-config
+                  key: FIREBASE_PROJECT_ID
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /secrets/firebase-service-account.json
+            - name: BOOKING_SERVICE_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: composite-report-issue-config
+                  key: BOOKING_SERVICE_HOST
+            - name: REPORT_SERVICE_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: composite-report-issue-config
+                  key: REPORT_SERVICE_HOST
+            - name: MAPS_WRAPPER_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: composite-report-issue-config
+                  key: MAPS_WRAPPER_HOST
+            - name: OPENAI_WRAPPER_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: composite-report-issue-config
+                  key: OPENAI_WRAPPER_HOST
+            - name: RABBITMQ_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: common-config
+                  key: RABBITMQ_HOST
+            - name: RABBITMQ_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: common-config
+                  key: RABBITMQ_PORT
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 6003
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 6003
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            failureThreshold: 5
+          volumeMounts:
+            - name: firebase-sa
+              mountPath: /secrets
+              readOnly: true
+      volumes:
+        - name: firebase-sa
+          secret:
+            secretName: firebase-sa

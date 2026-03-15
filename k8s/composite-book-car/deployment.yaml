@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: composite-book-car
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: composite-book-car
+  template:
+    metadata:
+      labels:
+        app: composite-book-car
+    spec:
+      containers:
+        - name: composite-book-car
+          image: esd-composite-book-car:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 6001
+          env:
+            - name: FIREBASE_PROJECT_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: composite-book-car-config
+                  key: FIREBASE_PROJECT_ID
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /secrets/firebase-service-account.json
+            - name: DRIVER_SERVICE_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: composite-book-car-config
+                  key: DRIVER_SERVICE_HOST
+            - name: VEHICLE_SERVICE_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: composite-book-car-config
+                  key: VEHICLE_SERVICE_HOST
+            - name: PRICING_SERVICE_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: composite-book-car-config
+                  key: PRICING_SERVICE_HOST
+            - name: BOOKING_SERVICE_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: composite-book-car-config
+                  key: BOOKING_SERVICE_HOST
+            - name: STRIPE_WRAPPER_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: composite-book-car-config
+                  key: STRIPE_WRAPPER_HOST
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 6001
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 6001
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            failureThreshold: 5
+          volumeMounts:
+            - name: firebase-sa
+              mountPath: /secrets
+              readOnly: true
+      volumes:
+        - name: firebase-sa
+          secret:
+            secretName: firebase-sa

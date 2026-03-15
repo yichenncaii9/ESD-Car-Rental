@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: composite-cancel-booking-config
+  namespace: default
+data:
+  FIREBASE_PROJECT_ID: "esd-rental-car"
+  PORT: "6002"
+  # Hyphenated K8s Service names — override app.py underscore defaults
+  BOOKING_SERVICE_HOST: "booking-service:5002"
+  VEHICLE_SERVICE_HOST: "vehicle-service:5001"
+  PRICING_SERVICE_HOST: "pricing-service:5005"
+  STRIPE_WRAPPER_HOST: "stripe-wrapper:6202"
