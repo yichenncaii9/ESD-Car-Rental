@@ -11,14 +11,14 @@
   "dependencies": {
     "@fawmi/vue-google-maps": "^0.9.79",
     "axios": "^1.7.0",
-    "firebase": "^10.0.0",
+    "firebase": "^11.10.0",
     "pinia": "^2.1.0",
     "socket.io-client": "^4.7.0",
     "vue": "^3.4.0",
     "vue-router": "^4.3.0"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^5.0.0",
-    "vite": "^5.0.0"
+    "@vitejs/plugin-vue": "^5.2.4",
+    "vite": "^6.4.1"
   }
 }

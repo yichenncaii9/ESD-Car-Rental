@@ -127,6 +127,9 @@ async function submitBooking() {
     })
     bookingSuccess.value = `Booking confirmed! ID: ${res.data.booking_id || res.data.id}`
     selectedVehicle.value = null
+    // Refresh vehicle list so booked vehicle shows as rented
+    const vRes = await api.get('/api/vehicles')
+    vehicles.value = vRes.data.data || vRes.data.vehicles || []
   } catch (err) {
     bookingError.value = err.response?.data?.error || 'Booking failed. Please try again.'
   } finally {

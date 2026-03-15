@@ -35,11 +35,21 @@
     <!-- Report form -->
     <form @submit.prevent="submitReport" class="report-form">
       <div class="form-group">
+        <label>Booking ID</label>
+        <input
+          v-model="bookingId"
+          type="text"
+          placeholder="Auto-filled from your active booking"
+          required
+          :disabled="submitting"
+        />
+      </div>
+      <div class="form-group">
         <label>Vehicle ID</label>
         <input
           v-model="vehicleId"
           type="text"
-          placeholder="e.g. v001 (from your booking)"
+          placeholder="Auto-filled from your active booking"
           required
           :disabled="submitting"
         />
@@ -81,12 +91,13 @@ const authStore = useAuthStore()
 // Default to central Singapore; overridden by geolocation on mount
 const incidentLocation = ref({ lat: 1.3521, lng: 103.8198 })
 const vehicleId   = ref('')
+const bookingId   = ref('')
 const description = ref('')
 const submitting  = ref(false)
 const submitError = ref('')
 const submitResult = ref(null)
 
-onMounted(() => {
+onMounted(async () => {
   // Auto-detect user location via browser Geolocation API
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
@@ -98,9 +109,19 @@ onMounted(() => {
       },
       (err) => {
         console.warn('Geolocation denied or unavailable:', err.message)
-        // Falls back to default Singapore center — map is still usable
       }
     )
+  }
+  // Auto-fill booking_id and vehicle_id from active booking
+  try {
+    const uid = authStore.currentUser?.uid
+    if (!uid) return
+    const res = await api.get(`/api/bookings/user/${uid}/active`)
+    const booking = res.data.data || res.data
+    if (booking?.id) bookingId.value = booking.id
+    if (booking?.vehicle_id) vehicleId.value = booking.vehicle_id
+  } catch {
+    // No active booking — user can fill in manually
   }
 })
 
@@ -127,7 +148,8 @@ async function submitReport() {
   try {
     const uid = authStore.currentUser?.uid
     const res = await api.post('/api/report-issue', {
-      uid,
+      user_uid:    uid,
+      booking_id:  bookingId.value,
       vehicle_id:  vehicleId.value,
       description: description.value,
       lat:         incidentLocation.value.lat,
@@ -135,7 +157,7 @@ async function submitReport() {
     })
     submitResult.value = res.data
   } catch (err) {
-    submitError.value = err.response?.data?.error || 'Report submission failed. Please try again.'
+    submitError.value = err.response?.data?.message || err.response?.data?.error || 'Report submission failed. Please try again.'
   } finally {
     submitting.value = false
   }

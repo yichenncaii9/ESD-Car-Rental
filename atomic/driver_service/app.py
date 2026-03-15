@@ -39,6 +39,34 @@ def get_driver(uid):
     return jsonify({"status": "ok", "data": docs[0].to_dict()}), 200
 
 
+@app.route("/api/drivers", methods=["POST"])
+def create_driver():
+    if db is None:
+        return jsonify({"status": "error", "message": "Firestore unavailable"}), 500
+
+    body = request.get_json(silent=True) or {}
+    uid = body.get("uid")
+    license_number = body.get("license_number")
+    license_expiry = body.get("license_expiry")
+
+    if not all([uid, license_number, license_expiry]):
+        return jsonify({"status": "error", "message": "Missing required fields: uid, license_number, license_expiry"}), 400
+
+    doc_ref = db.collection("drivers").document(license_number)
+    if doc_ref.get().exists:
+        return jsonify({"status": "error", "message": "Driver with this license_number already exists"}), 409
+
+    record = {
+        "uid": uid,
+        "name": body.get("name", ""),
+        "email": body.get("email", ""),
+        "license_number": license_number,
+        "license_expiry": license_expiry,
+    }
+    doc_ref.set(record)
+    return jsonify({"status": "created", "data": record}), 201
+
+
 @app.route("/api/drivers/validate", methods=["POST"])
 def validate_driver():
     if db is None:

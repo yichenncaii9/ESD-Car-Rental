@@ -92,7 +92,7 @@ onMounted(async () => {
     const uid = authStore.currentUser?.uid
     if (!uid) return
     const res = await api.get(`/api/bookings/user/${uid}/active`)
-    activeBooking.value = res.data
+    activeBooking.value = res.data.data || res.data
   } catch {
     // No active booking — that's fine, show manual lookup only
   }
@@ -105,9 +105,9 @@ async function lookupBooking() {
   manualCancelResult.value = null
   try {
     const res = await api.get(`/api/bookings/${manualBookingId.value}`)
-    lookedUpBooking.value = res.data
+    lookedUpBooking.value = res.data.data || res.data
   } catch (err) {
-    lookupError.value = err.response?.data?.error || 'Booking not found.'
+    lookupError.value = err.response?.data?.message || err.response?.data?.error || 'Booking not found.'
   } finally {
     looking.value = false
   }
@@ -122,7 +122,7 @@ async function cancelBooking(bookingId, isManual = false) {
     if (isManual) manualCancelResult.value = res.data
     else cancelResult.value = res.data
   } catch (err) {
-    const msg = err.response?.data?.error || 'Cancellation failed. Please try again.'
+    const msg = err.response?.data?.message || err.response?.data?.error || 'Cancellation failed. Please try again.'
     if (isManual) manualCancelError.value = msg
     else cancelError.value = msg
   } finally {
