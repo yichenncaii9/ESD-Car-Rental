@@ -2,7 +2,7 @@
 phase: 06-kubernetes
 plan: "06"
 subsystem: infra
-tags: [kubernetes, k8s, frontend, nodport, deployment, service, smoke-test]
+tags: [kubernetes, k8s, frontend, nodeport, deployment, service, smoke-test, kong, jwt, public-key]
 
 # Dependency graph
 requires:
@@ -12,130 +12,117 @@ requires:
 provides:
   - k8s/frontend/deployment.yaml — Deployment: esd-frontend:latest, imagePullPolicy: Never, port 8080, liveness/readiness probes, no runtime env vars
   - k8s/frontend/service.yaml — NodePort Service exposing frontend at nodePort 30080
+  - kong.yml (root) — Kong declarative config with correct RS256 public key (BEGIN PUBLIC KEY)
+  - k8s/kong/kong.yml — K8s Kong declarative config reference with correct RS256 public key
+  - k8s/kong/configmap.yaml — K8s ConfigMap with correct RS256 public key loaded by Kong pod
 
 affects:
-  - Full cluster readiness: frontend is the final piece; all 18 pod_check assertions in verify_phase6.sh now have their corresponding Deployment/Service
+  - Full cluster: 30/30 smoke tests passing after three root causes fixed during deployment
 
 # Tech tracking
 tech-stack:
   added: []
   patterns:
     - "Frontend NodePort pattern: Deployment with imagePullPolicy: Never + no env vars (VITE_* baked at build time by scripts/build-images.sh) + NodePort 30080 for Docker Desktop host access"
+    - "Kong RS256 JWT: requires PKCS#8 public key (BEGIN PUBLIC KEY) not x509 certificate (BEGIN CERTIFICATE) — extract via: openssl x509 -pubkey -noout -in cert.pem"
+    - "k8s/kong/kong.yml is Kong declarative config (not a K8s manifest) — apply via configmap only, never via kubectl apply directly"
 
 key-files:
   created:
     - k8s/frontend/deployment.yaml
     - k8s/frontend/service.yaml
-  modified: []
+  modified:
+    - kong.yml
+    - k8s/kong/kong.yml
+    - k8s/kong/configmap.yaml
 
 key-decisions:
   - "No env vars in frontend Deployment — VITE_* variables are baked into the image at build time by scripts/build-images.sh; adding runtime env vars would have no effect and is explicitly wrong"
   - "NodePort 30080 used instead of ClusterIP — frontend is the public-facing Vue.js app accessed from Docker Desktop host browser at localhost:30080"
-  - "python3 yaml.safe_load used for YAML validation (no live cluster) — established project fallback per STATE.md decisions"
+  - "Kong JWT plugin requires BEGIN PUBLIC KEY not BEGIN CERTIFICATE — extract RSA public key from x509 cert via openssl x509 -pubkey -noout; configmap.yaml and k8s/kong/kong.yml updated"
+  - "k8s/kong/kong.yml must NOT be applied with kubectl apply — it is Kong's declarative config loaded via configmap, not a K8s manifest; kubectl apply rejects it as invalid"
+  - "esd-* Docker images must be built locally before kubectl apply — scripts/build-images.sh must run first; images use imagePullPolicy: Never so K8s will not pull from registry"
 
 requirements-completed: [K8S-01, K8S-06, K8S-07]
 
 # Metrics
-duration: ~1min
+duration: ~30min (including user-run deployment + fixes)
 completed: 2026-03-15
 ---
 
 # Phase 6 Plan 06: Frontend K8s Manifests + Final Smoke Test Summary
 
-**Frontend Deployment (esd-frontend:latest, imagePullPolicy: Never, port 8080, no env vars) and NodePort Service (nodePort 30080) — final piece of the 18-service Kubernetes cluster**
+**Frontend Deployment (esd-frontend:latest, imagePullPolicy: Never, port 8080, no env vars) and NodePort Service (nodePort 30080) — final piece of the 18-service Kubernetes cluster. 30/30 smoke tests passing after three root causes fixed during deployment.**
 
 ## Performance
 
-- **Duration:** ~1 min
+- **Duration:** ~30 min (manifests ~1 min automated + user deployment + three root-cause fixes)
 - **Started:** 2026-03-15T06:21:13Z
-- **Completed:** 2026-03-15T06:21:44Z
-- **Tasks:** 1 completed (auto) / 1 requires cluster (auto) / 1 checkpoint (human-verify)
-- **Files modified:** 2
+- **Completed:** 2026-03-15
+- **Tasks:** 3 tasks complete (1 auto, 1 human-run, 1 human-verify APPROVED)
+- **Files modified:** 5
 
 ## Accomplishments
 
 - Created `k8s/frontend/deployment.yaml`: esd-frontend:latest, imagePullPolicy: Never, containerPort 8080, liveness and readiness probes (httpGet /, initialDelaySeconds 15, periodSeconds 20, failureThreshold 5), NO runtime env vars (VITE_* baked at build time)
 - Created `k8s/frontend/service.yaml`: NodePort Service, port 8080, targetPort 8080, nodePort 30080 — exposes Vue.js app to Docker Desktop host at localhost:30080
-- Both files validated as correct YAML via python3 yaml.safe_load with structural assertions
+- User ran full kubectl apply sequence and smoke test — 30/30 checks passing
+- Kong CrashLoopBackOff fixed: replaced BEGIN CERTIFICATE with BEGIN PUBLIC KEY in all three Kong config files (root kong.yml, k8s/kong/kong.yml, k8s/kong/configmap.yaml)
+- Frontend accessible at http://localhost:30080
+- docker-compose.yml valid (K8S-06 preserved)
 
 ## Task Commits
 
 Each task was committed atomically:
 
 1. **Task 1: Frontend Deployment + Service manifests** - `dc2a9db` (feat)
+2. **Task 2: Apply manifests + smoke test** - run manually by user (no automated commit)
+3. **Task 3: Human verify** - APPROVED (30/30 passing)
+4. **Root cause fixes: Kong public key format** - `e060247` (fix)
 
 ## Files Created/Modified
 
 - `k8s/frontend/deployment.yaml` — Deployment: esd-frontend:latest, imagePullPolicy: Never, port 8080, liveness/readiness probes at path /, no env section
 - `k8s/frontend/service.yaml` — NodePort Service: port 8080, targetPort 8080, nodePort 30080
+- `kong.yml` (root) — RSA public key updated from BEGIN CERTIFICATE to BEGIN PUBLIC KEY
+- `k8s/kong/kong.yml` — RSA public key updated (K8s declarative config reference copy)
+- `k8s/kong/configmap.yaml` — RSA public key updated (this is what Kong pod actually loads in K8s)
 
 ## Decisions Made
 
 - No env vars in frontend Deployment: VITE_* variables are baked into the image at build time by `scripts/build-images.sh` — adding them at runtime has no effect (Vite static bundle)
 - NodePort chosen over ClusterIP: frontend is the only service needing direct host access from Docker Desktop browser
-- python3 yaml.safe_load for YAML validation (established project fallback — kubectl --dry-run=client requires live API server)
+- Kong RS256 JWT requires PKCS#8 public key, not x509 certificate: `openssl x509 -pubkey -noout` extracts the correct format from the Firebase-issued certificate
 
 ## Deviations from Plan
 
-### Auth Gate / Environment Requirement
+### Auto-fixed Issues
 
-**Task 2 (Apply all manifests and run smoke test):** Requires a live Kubernetes cluster (Docker Desktop with Kubernetes enabled). No cluster was available during automated execution — connection refused on localhost:8080. This is the same environment constraint encountered and documented throughout Phase 6. Task 2 commands must be run manually by the user once Docker Desktop Kubernetes is active.
+**1. [Rule 1 - Bug] Kong JWT public key format: CERTIFICATE replaced with PUBLIC KEY**
+- **Found during:** Task 2 (user deployment) — Kong pod entered CrashLoopBackOff
+- **Root cause:** Kong JWT plugin requires a PKCS#8 public key (-----BEGIN PUBLIC KEY-----). The config contained an x509 certificate (-----BEGIN CERTIFICATE-----) which Kong rejects at startup.
+- **Fix:** Extracted RSA public key via `openssl x509 -pubkey -noout` from the Firebase certificate. Updated all three locations: `kong.yml` (root, Docker Compose), `k8s/kong/kong.yml` (K8s reference), `k8s/kong/configmap.yaml` (what K8s actually mounts into the Kong pod).
+- **Files modified:** `kong.yml`, `k8s/kong/kong.yml`, `k8s/kong/configmap.yaml`
+- **Commit:** `e060247`
 
-**Commands to run (Task 2 sequence):**
+### Environment Gates (Expected)
 
-```bash
-# From project root: /Applications/MAMP/htdocs/y2s2/ESD/ESDProj
+**Task 2 — Live cluster required:** Task 2 (apply manifests and run smoke test) requires a live Kubernetes cluster. No cluster was available during automated execution. The user ran the full apply sequence manually.
 
-# 0. Create Secrets FIRST
-bash scripts/setup-secrets.sh
+**Task 2 — esd-* images needed:** User ran `scripts/build-images.sh` first to build all `esd-*` Docker images with `imagePullPolicy: Never`. This is documented in the plan but was an explicit prerequisite step.
 
-# 1. Shared ConfigMap
-kubectl apply -f k8s/shared/
+**Task 2 — kong.yml not a K8s manifest:** `k8s/kong/kong.yml` is Kong's declarative config file, not a Kubernetes manifest. `kubectl apply` rejects it. The user applied all other directories and skipped this file, which is correct — it gets loaded via `k8s/kong/configmap.yaml`.
 
-# 2. Infrastructure
-kubectl apply -f k8s/rabbitmq/
-kubectl apply -f k8s/kong/
+## Smoke Test Results
 
-# 3. Atomic services
-kubectl apply -f k8s/vehicle-service/
-kubectl apply -f k8s/booking-service/
-kubectl apply -f k8s/driver-service/
-kubectl apply -f k8s/report-service/
-kubectl apply -f k8s/pricing-service/
+User verified: **30/30 checks PASS**
 
-# 4. Wrappers + websocket-server
-kubectl apply -f k8s/openai-wrapper/
-kubectl apply -f k8s/googlemaps-wrapper/
-kubectl apply -f k8s/stripe-wrapper/
-kubectl apply -f k8s/twilio-wrapper-http/
-kubectl apply -f k8s/websocket-server/
-
-# 5. Composite services
-kubectl apply -f k8s/composite-book-car/
-kubectl apply -f k8s/composite-cancel-booking/
-kubectl apply -f k8s/composite-report-issue/
-kubectl apply -f k8s/composite-resolve-issue/
-
-# 6. Workers
-kubectl apply -f k8s/twilio-worker/
-kubectl apply -f k8s/activity-log/
-
-# 7. Frontend
-kubectl apply -f k8s/frontend/
-
-# 8. Wait ~90s for pods to initialize
-kubectl get pods --watch
-
-# 9. Port-forward Kong in a separate terminal
-kubectl port-forward svc/kong 8000:8000 8001:8001
-
-# 10. Run smoke test
-bash scripts/verify_phase6.sh
-```
-
-## Issues Encountered
-
-- kubectl cluster not available during automated execution (Docker Desktop Kubernetes not running). Resolved by committing manifests and documenting manual apply sequence for user.
+- All 18+ pod_check assertions: PASS
+- Kong admin and routing checks: PASS
+- K8S-04 (firebase-sa secret): PASS
+- K8S-05 (ConfigMaps): PASS
+- K8S-06 (docker-compose.yml valid): PASS
+- Frontend at http://localhost:30080: accessible
 
 ## Self-Check
 
@@ -145,28 +132,24 @@ bash scripts/verify_phase6.sh
 Files verified to exist:
 - k8s/frontend/deployment.yaml: FOUND
 - k8s/frontend/service.yaml: FOUND
+- k8s/kong/configmap.yaml: FOUND (updated with BEGIN PUBLIC KEY)
+- k8s/kong/kong.yml: FOUND (updated with BEGIN PUBLIC KEY)
+- kong.yml: FOUND (updated with BEGIN PUBLIC KEY)
 
 Commits verified:
 - dc2a9db: FOUND (feat(06-06): frontend Kubernetes Deployment and Service manifests)
+- e060247: FOUND (fix(06-06): Kong JWT public key format — CERTIFICATE -> PUBLIC KEY)
 
-## User Setup Required
+## Phase 6 Complete
 
-**Docker Desktop Kubernetes must be running before executing the apply sequence.**
+All 6 plans of Phase 6 (Kubernetes) are complete. The full 18-service car rental platform runs on Kubernetes (Docker Desktop):
 
-1. Enable Kubernetes in Docker Desktop → Settings → Kubernetes → Enable Kubernetes → Apply & Restart
-2. Wait until Docker Desktop shows "Kubernetes running" (green dot)
-3. Run `kubectl cluster-info` to verify cluster is accessible
-4. Run the Task 2 command sequence above
-5. In a separate terminal: `kubectl port-forward svc/kong 8000:8000 8001:8001`
-6. Run `bash scripts/verify_phase6.sh` — expect all 18 pod_check assertions to PASS
-7. Open browser at http://localhost:30080 to confirm frontend is accessible
-8. Run `docker compose config` to confirm K8S-06 (docker-compose.yml still valid)
-
-## Next Phase Readiness
-
-- All K8s manifests for all 18 services are now created and committed
-- Phase 6 (Kubernetes) is complete from a manifest perspective
-- Final verification requires user to run the cluster with Docker Desktop Kubernetes
+- **Phase 6-01:** Core infrastructure (RabbitMQ, Kong, shared ConfigMap, setup scripts)
+- **Phase 6-02:** Atomic services (vehicle, booking, driver, report, pricing)
+- **Phase 6-03:** Additional atomic services + verify script
+- **Phase 6-04:** Wrappers + websocket-server K8s manifests
+- **Phase 6-05:** Composite services + AMQP workers K8s manifests
+- **Phase 6-06:** Frontend manifests + full cluster smoke test (30/30 PASS)
 
 ---
 *Phase: 06-kubernetes*

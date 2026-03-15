@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-stopped_at: Completed 06-06-PLAN.md (Frontend K8s manifests — awaiting human verify of cluster)
-last_updated: "2026-03-15T06:22:50.368Z"
+stopped_at: Completed 06-06-PLAN.md (Frontend K8s manifests + full cluster verified — 30/30 smoke tests PASS)
+last_updated: "2026-03-15T08:44:10.043Z"
 last_activity: 2026-03-15 — Phase 5 (Async Workers) complete; SMU Notification API replaces Twilio in workers/twilio_wrapper
 progress:
   total_phases: 6
@@ -94,6 +94,7 @@ Progress: [█████████░] 83%
 | Phase 06-kubernetes P03 | 5min | 2 tasks | 15 files |
 | Phase 06-kubernetes P05 | 3min | 2 tasks | 15 files |
 | Phase 06-kubernetes P06 | 1min | 1 tasks | 2 files |
+| Phase 06-kubernetes P06 | 30min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -161,6 +162,9 @@ Recent decisions affecting current work:
 - [Phase 06-kubernetes]: Inter-service host env vars use hyphenated K8s DNS names in composite ConfigMaps (vehicle-service:5001) to override app.py Docker Compose underscore defaults that cause NXDOMAIN in K8s
 - [Phase 06-kubernetes]: AMQP workers (twilio-worker, activity-log) intentionally have no K8s Service — pure consumers with no inbound HTTP; CrashLoopBackOff expected until RabbitMQ ready, pika retry self-heals
 - [Phase 06-kubernetes]: No env vars in frontend Deployment — VITE_* variables baked at build time by scripts/build-images.sh; NodePort 30080 for Docker Desktop host access
+- [Phase 06-kubernetes]: Kong JWT plugin requires BEGIN PUBLIC KEY not BEGIN CERTIFICATE — extract RSA public key from x509 cert via openssl x509 -pubkey -noout; configmap.yaml and k8s/kong/kong.yml updated
+- [Phase 06-kubernetes]: k8s/kong/kong.yml must NOT be applied with kubectl apply — it is Kong's declarative config loaded via configmap, not a K8s manifest
+- [Phase 06-kubernetes]: esd-* Docker images must be built locally (scripts/build-images.sh) before kubectl apply — imagePullPolicy: Never means K8s will not pull from registry
 
 ### Pending Todos
 
@@ -178,6 +182,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-15T06:22:50.366Z
-Stopped at: Completed 06-06-PLAN.md (Frontend K8s manifests — awaiting human verify of cluster)
+Last session: 2026-03-15T08:43:58.411Z
+Stopped at: Completed 06-06-PLAN.md (Frontend K8s manifests + full cluster verified — 30/30 smoke tests PASS)
 Resume file: None
