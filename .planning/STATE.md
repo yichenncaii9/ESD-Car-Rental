@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-stopped_at: Completed 06-04-PLAN.md (wrapper services and websocket-server K8s manifests)
-last_updated: "2026-03-15T06:15:18.974Z"
+stopped_at: "Completed 06-03-PLAN.md (Atomic service K8s manifests: vehicle, booking, driver, report, pricing)"
+last_updated: "2026-03-15T06:15:25.839Z"
 last_activity: 2026-03-15 — Phase 5 (Async Workers) complete; SMU Notification API replaces Twilio in workers/twilio_wrapper
 progress:
   total_phases: 6
@@ -154,6 +154,8 @@ Recent decisions affecting current work:
 - [Phase 06-kubernetes]: K8s YAML validated via python3 yaml.safe_load when no cluster is available; kubectl dry-run requires live API server
 - [Phase 06-kubernetes]: Validated YAML with python3 yaml.safe_load instead of kubectl --dry-run=client because no live API server available in dev environment
 - [Phase 06-kubernetes]: websocket-server ConfigMap contains PORT: 6100 for K8S-01 compliance even though Deployment does not mount it
+- [Phase 06-kubernetes]: pricing-service has no firebase volume or env vars — hardcoded rates, no Firestore dependency (per established Phase 1 decision)
+- [Phase 06-kubernetes]: kubectl dry-run unavailable without live cluster; python3 yaml.safe_load used as established fallback for K8s YAML validation
 
 ### Pending Todos
 
@@ -171,6 +173,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-15T06:15:12.700Z
-Stopped at: Completed 06-04-PLAN.md (wrapper services and websocket-server K8s manifests)
+Last session: 2026-03-15T06:15:25.837Z
+Stopped at: Completed 06-03-PLAN.md (Atomic service K8s manifests: vehicle, booking, driver, report, pricing)
 Resume file: None
