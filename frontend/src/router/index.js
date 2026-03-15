@@ -17,7 +17,8 @@ const routes = [
   { path: '/book-car',          component: () => import('../views/BookCarView.vue'),          meta: { requiresAuth: true } },
   { path: '/cancel-booking',    component: () => import('../views/CancelBookingView.vue'),    meta: { requiresAuth: true } },
   { path: '/report-incident',   component: () => import('../views/ReportIncidentView.vue'),   meta: { requiresAuth: true } },
-  { path: '/service-dashboard', component: () => import('../views/ServiceDashboardView.vue'), meta: { requiresAuth: true } }
+  { path: '/service-dashboard', component: () => import('../views/ServiceDashboardView.vue'), meta: { requiresAuth: true } },
+  { path: '/profile',           component: () => import('../views/ProfileView.vue'),           meta: { requiresAuth: true } }
 ]
 
 const router = createRouter({ history: createWebHistory(), routes })

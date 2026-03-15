@@ -67,6 +67,29 @@ def create_driver():
     return jsonify({"status": "created", "data": record}), 201
 
 
+@app.route("/api/drivers/<string:uid>", methods=["PUT"])
+def update_driver(uid):
+    if db is None:
+        return jsonify({"status": "error", "message": "Firestore unavailable"}), 500
+
+    body = request.get_json(silent=True) or {}
+    docs = list(db.collection("drivers").where("uid", "==", uid).stream())
+    if not docs:
+        return jsonify({"status": "error", "message": "Driver not found"}), 404
+
+    updates = {}
+    for field in ["name", "email", "license_number", "license_expiry"]:
+        if field in body:
+            updates[field] = body[field]
+
+    if not updates:
+        return jsonify({"status": "error", "message": "No fields to update"}), 400
+
+    docs[0].reference.update(updates)
+    updated = {**docs[0].to_dict(), **updates}
+    return jsonify({"status": "ok", "data": updated}), 200
+
+
 @app.route("/api/drivers/validate", methods=["POST"])
 def validate_driver():
     if db is None:
