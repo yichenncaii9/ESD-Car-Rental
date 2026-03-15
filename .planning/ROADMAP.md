@@ -142,5 +142,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Frontend | 7/7 | Complete   | 2026-03-14 |
 | 3. Atomic Services | 5/5 | Complete   | 2026-03-14 |
 | 4. Composite Services | 3/6 | In Progress|  |
-| 5. Async Workers | 1/3 | In Progress|  |
+| 5. Async Workers | 2/3 | In Progress|  |
 | 6. Kubernetes | 0/TBD | Not started | - |

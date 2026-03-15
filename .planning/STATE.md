@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 05-01-PLAN.md (websocket_server upgrade and Phase 5 smoke tests)
-last_updated: "2026-03-15T03:17:29.180Z"
+stopped_at: Completed 05-02-PLAN.md (activity_log AMQP consumer with Firestore write and websocket notify)
+last_updated: "2026-03-15T03:19:36.154Z"
 last_activity: 2026-03-13 — Roadmap created; ready to begin Phase 1 planning
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 21
-  completed_plans: 22
+  completed_plans: 23
   percent: 94
 ---
 
@@ -119,6 +119,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04-composite-services P05 | 2 | 1 tasks | 1 files |
 | Phase 04-composite-services P06 | 10 | 2 tasks | 2 files |
 | Phase 05-async-workers P01 | 1 | 2 tasks | 2 files |
+| Phase 05-async-workers P02 | 2min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -173,6 +174,8 @@ Recent decisions affecting current work:
 - [Phase 04-composite-services]: resolve_issue sms_status written directly to Firestore on Twilio failure — report_service PUT /resolution cannot set sms_status field
 - [Phase 05-async-workers]: websocket_server emit shape: {**data, 'id': data.get('report_id')} — id alias required for ServiceDashboardView findIndex
 - [Phase 05-async-workers]: verify_phase5.sh uses check() for HTTP and log_check() with 2>/dev/null for docker-compose log grep
+- [Phase 05-async-workers]: activity_log always ACKs in finally block — message not requeued even if Firestore or websocket fails (audit trail is best-effort, not blocking)
+- [Phase 05-async-workers]: exchange_type=topic on activity_log — must match report_issue declaration exactly to avoid ChannelClosedByBroker
 
 ### Pending Todos
 
@@ -190,6 +193,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-15T03:17:24.695Z
-Stopped at: Completed 05-01-PLAN.md (websocket_server upgrade and Phase 5 smoke tests)
+Last session: 2026-03-15T03:19:36.152Z
+Stopped at: Completed 05-02-PLAN.md (activity_log AMQP consumer with Firestore write and websocket notify)
 Resume file: None

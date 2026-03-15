@@ -77,9 +77,9 @@
 - [ ] **WORK-02**: twilio_wrapper sends SMS to service team via Twilio API (severity already persisted in Phase A)
 - [ ] **WORK-03**: twilio_wrapper HTTP POSTs `{ report_id, event: "sms_sent" }` to websocket_server after SMS is sent
 - [ ] **WORK-04**: twilio_wrapper HTTP POSTs update payload to websocket_server after SMS is sent
-- [ ] **WORK-05**: activity_log subscribes to "activity_queue" bound to "report_topic" with key "report.new"
-- [ ] **WORK-06**: activity_log persists event to Firestore for audit trail and HTTP POSTs update payload to websocket_server
-- [ ] **WORK-07**: Both workers have pika retry logic (RabbitMQ may not be ready at startup)
+- [x] **WORK-05**: activity_log subscribes to "activity_queue" bound to "report_topic" with key "report.new"
+- [x] **WORK-06**: activity_log persists event to Firestore for audit trail and HTTP POSTs update payload to websocket_server
+- [x] **WORK-07**: Both workers have pika retry logic (RabbitMQ may not be ready at startup)
 
 ### WebSocket
 
@@ -189,9 +189,9 @@
 | WORK-02 | Phase 5 - Async Workers | Pending |
 | WORK-03 | Phase 5 - Async Workers | Pending |
 | WORK-04 | Phase 5 - Async Workers | Pending |
-| WORK-05 | Phase 5 - Async Workers | Pending |
-| WORK-06 | Phase 5 - Async Workers | Pending |
-| WORK-07 | Phase 5 - Async Workers | Pending |
+| WORK-05 | Phase 5 - Async Workers | Complete |
+| WORK-06 | Phase 5 - Async Workers | Complete |
+| WORK-07 | Phase 5 - Async Workers | Complete |
 | WS-01 | Phase 1 - Foundation (container) / Phase 5 - Async Workers (integration) | Complete |
 | WS-02 | Phase 2 - Frontend (client: Socket.IO in ServiceDashboardView) / Phase 5 - Async Workers (server: websocket_server /notify endpoint) | Complete |
 | WS-03 | Phase 5 - Async Workers | Complete |
