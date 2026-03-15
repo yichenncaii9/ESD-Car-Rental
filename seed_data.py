@@ -1,9 +1,16 @@
 #!/usr/bin/env python3
 """
 seed_data.py — Firestore seeder for ESD Rental Car Service
-Run from ESDProj/ root: python seed_data.py
+
+Run once (team lead only):
+    python seed_data.py
+
 Requires: firebase-service-account.json at ESDProj/ root
 Idempotent: skips documents that already exist
+
+HOW TO GET FIREBASE AUTH UIDs:
+    Firebase Console → Authentication → Users → copy the UID column
+    for each test account, then fill in TEST_ACCOUNT_A_UID / TEST_ACCOUNT_B_UID below.
 """
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -11,6 +18,12 @@ from firebase_admin import credentials, firestore
 cred = credentials.Certificate("firebase-service-account.json")
 firebase_admin.initialize_app(cred)
 db = firestore.client()
+
+# ── Fill these in once you have created the Firebase Auth test accounts ────────
+# Firebase Console → Authentication → Users → copy UID
+TEST_ACCOUNT_A_UID = "SMWcTzar1aYxmcnnOe7DJqGwO6A2"   # e.g. testdriver_a@test.com
+TEST_ACCOUNT_B_UID = "ep3tVNPcFcZEkybfzQadOL7Yczk2"   # e.g. testdriver_b@test.com
+# ──────────────────────────────────────────────────────────────────────────────
 
 VEHICLES = [
     {"plate_number": "SBA1234A", "make": "Toyota", "model": "Corolla", "vehicle_type": "sedan",
@@ -35,13 +48,23 @@ VEHICLES = [
      "year": 2023, "status": "available", "location_lat": 1.3000, "location_lng": 103.8000, "branch_id": 2},
 ]
 
+# Driver records tied to real Firebase Auth UIDs.
+# Each teammate logs in with one of these accounts and their profile is pre-seeded.
 DRIVERS = [
-    {"uid": "test_driver_001", "name": "John Tan", "license_number": "S1234567A",
-     "license_expiry": "2027-12-31", "email": "john.tan@example.com"},
-    {"uid": "test_driver_002", "name": "Mary Lim", "license_number": "S7654321B",
-     "license_expiry": "2026-06-30", "email": "mary.lim@example.com"},
-    {"uid": "test_driver_003", "name": "Ahmad Bin Ali", "license_number": "S9876543C",
-     "license_expiry": "2028-03-15", "email": "ahmad.ali@example.com"},
+    {
+        "uid": TEST_ACCOUNT_A_UID,
+        "name": "Test Driver A",
+        "license_number": "S1111111A",
+        "license_expiry": "2028-12-31",
+        "email": "testdriver_a@test.com",
+    },
+    {
+        "uid": TEST_ACCOUNT_B_UID,
+        "name": "Test Driver B",
+        "license_number": "S2222222B",
+        "license_expiry": "2028-12-31",
+        "email": "testdriver_b@test.com",
+    },
 ]
 
 
