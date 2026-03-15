@@ -97,8 +97,8 @@
 ### Kubernetes
 
 - [x] **K8S-01**: Every service has a Kubernetes Deployment + Service + ConfigMap manifest (k8s/ directory)
-- [ ] **K8S-02**: RabbitMQ runs as a Kubernetes StatefulSet with persistent volume
-- [ ] **K8S-03**: Kong runs as a standalone Kubernetes pod or Ingress controller, routing all /api/* paths
+- [x] **K8S-02**: RabbitMQ runs as a Kubernetes StatefulSet with persistent volume
+- [x] **K8S-03**: Kong runs as a standalone Kubernetes pod or Ingress controller, routing all /api/* paths
 - [x] **K8S-04**: firebase-service-account.json stored as a Kubernetes Secret, mounted read-only into all Firestore-connected pods
 - [x] **K8S-05**: All .env values migrated to Kubernetes ConfigMaps (non-sensitive) and Secrets (API keys)
 - [x] **K8S-06**: docker-compose.yml is preserved and functional for local development
@@ -197,8 +197,8 @@
 | WS-03 | Phase 5 - Async Workers | Complete |
 | WS-04 | Phase 5 - Async Workers | Complete |
 | K8S-01 | Phase 6 - Kubernetes | Complete |
-| K8S-02 | Phase 6 - Kubernetes | Pending |
-| K8S-03 | Phase 6 - Kubernetes | Pending |
+| K8S-02 | Phase 6 - Kubernetes | Complete |
+| K8S-03 | Phase 6 - Kubernetes | Complete |
 | K8S-04 | Phase 6 - Kubernetes | Complete |
 | K8S-05 | Phase 6 - Kubernetes | Complete |
 | K8S-06 | Phase 6 - Kubernetes | Complete |

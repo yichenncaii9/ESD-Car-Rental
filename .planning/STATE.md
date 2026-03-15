@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: in_progress
-stopped_at: Completed 06-01-PLAN.md (K8s scaffolding scripts and shared config)
-last_updated: "2026-03-15T06:07:32.136Z"
+stopped_at: Completed 06-02-PLAN.md (RabbitMQ StatefulSet + Kong ConfigMap/Deployment/Service)
+last_updated: "2026-03-15T06:11:39.222Z"
 last_activity: 2026-03-15 — Phase 5 (Async Workers) complete; SMU Notification API replaces Twilio in workers/twilio_wrapper
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 27
-  completed_plans: 25
+  completed_plans: 26
 ---
 
 ---
@@ -89,6 +89,7 @@ Progress: [█████████░] 83%
 | Phase 05-async-workers P02 | 2min | 1 tasks | 1 files |
 | Phase 05-async-workers P03 | 3min | 2 tasks | 2 files |
 | Phase 06-kubernetes P01 | 5min | 3 tasks | 5 files |
+| Phase 06-kubernetes P02 | 2min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -148,6 +149,7 @@ Recent decisions affecting current work:
 - [Phase 05-async-workers]: twilio import inside send_sms try block so ImportError triggers mock fallback; TWILIO_SERVICE_TEAM guard allows dev without credentials
 - [Phase 06-kubernetes]: Separate k8s/kong/kong.yml from root kong.yml — K8s DNS requires hyphens in service names, Docker Compose uses underscores; two files keep both environments working
 - [Phase 06-kubernetes]: kubectl --dry-run=client -o yaml | kubectl apply -f - for idempotent K8s secret creation; firebase-sa uses --from-file, api-keys uses --from-literal
+- [Phase 06-kubernetes]: K8s YAML validated via python3 yaml.safe_load when no cluster is available; kubectl dry-run requires live API server
 
 ### Pending Todos
 
@@ -165,6 +167,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-15T06:07:32.133Z
-Stopped at: Completed 06-01-PLAN.md (K8s scaffolding scripts and shared config)
+Last session: 2026-03-15T06:11:39.220Z
+Stopped at: Completed 06-02-PLAN.md (RabbitMQ StatefulSet + Kong ConfigMap/Deployment/Service)
 Resume file: None
