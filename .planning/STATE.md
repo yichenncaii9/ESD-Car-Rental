@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Completed 05-02-PLAN.md (activity_log AMQP consumer with Firestore write and websocket notify)
-last_updated: "2026-03-15T03:19:36.154Z"
+stopped_at: Completed 05-03-PLAN.md (twilio_wrapper AMQP consumer with Twilio SMS mock failover and websocket notify)
+last_updated: "2026-03-15T03:21:35.597Z"
 last_activity: 2026-03-13 — Roadmap created; ready to begin Phase 1 planning
 progress:
   total_phases: 6
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 21
-  completed_plans: 23
+  completed_plans: 24
   percent: 94
 ---
 
@@ -120,6 +120,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04-composite-services P06 | 10 | 2 tasks | 2 files |
 | Phase 05-async-workers P01 | 1 | 2 tasks | 2 files |
 | Phase 05-async-workers P02 | 2min | 1 tasks | 1 files |
+| Phase 05-async-workers P03 | 3min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -176,6 +177,7 @@ Recent decisions affecting current work:
 - [Phase 05-async-workers]: verify_phase5.sh uses check() for HTTP and log_check() with 2>/dev/null for docker-compose log grep
 - [Phase 05-async-workers]: activity_log always ACKs in finally block — message not requeued even if Firestore or websocket fails (audit trail is best-effort, not blocking)
 - [Phase 05-async-workers]: exchange_type=topic on activity_log — must match report_issue declaration exactly to avoid ChannelClosedByBroker
+- [Phase 05-async-workers]: twilio import inside send_sms try block so ImportError triggers mock fallback; TWILIO_SERVICE_TEAM guard allows dev without credentials
 
 ### Pending Todos
 
@@ -193,6 +195,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-15T03:19:36.152Z
-Stopped at: Completed 05-02-PLAN.md (activity_log AMQP consumer with Firestore write and websocket notify)
+Last session: 2026-03-15T03:21:35.595Z
+Stopped at: Completed 05-03-PLAN.md (twilio_wrapper AMQP consumer with Twilio SMS mock failover and websocket notify)
 Resume file: None

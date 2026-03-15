@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Frontend** - Vue.js 3 app with Firebase Auth, Google Maps, and Kong-routed API calls (completed 2026-03-14)
 - [x] **Phase 3: Atomic Services** - Five atomic Flask microservices (vehicle, booking, driver, report, pricing) (completed 2026-03-14)
 - [ ] **Phase 4: Composite Services** - Four composite orchestration services covering all three user scenarios
-- [ ] **Phase 5: Async Workers** - AMQP workers for Twilio SMS and WebSocket real-time push; openai_wrapper is HTTP
+- [x] **Phase 5: Async Workers** - AMQP workers for Twilio SMS and WebSocket real-time push; openai_wrapper is HTTP (completed 2026-03-15)
 - [ ] **Phase 6: Kubernetes** - Convert all 18 services to Kubernetes manifests for production deployment
 
 ## Phase Details
@@ -142,5 +142,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5
 | 2. Frontend | 7/7 | Complete   | 2026-03-14 |
 | 3. Atomic Services | 5/5 | Complete   | 2026-03-14 |
 | 4. Composite Services | 3/6 | In Progress|  |
-| 5. Async Workers | 2/3 | In Progress|  |
+| 5. Async Workers | 3/3 | Complete   | 2026-03-15 |
 | 6. Kubernetes | 0/TBD | Not started | - |
