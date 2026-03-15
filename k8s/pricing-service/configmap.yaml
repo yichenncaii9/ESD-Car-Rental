@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pricing-service-config
+  namespace: default
+data:
+  PORT: "5005"

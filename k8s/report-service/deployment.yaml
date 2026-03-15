@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: report-service
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: report-service
+  template:
+    metadata:
+      labels:
+        app: report-service
+    spec:
+      containers:
+        - name: report-service
+          image: esd-report-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5004
+          env:
+            - name: FIREBASE_PROJECT_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: report-service-config
+                  key: FIREBASE_PROJECT_ID
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /secrets/firebase-service-account.json
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5004
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            failureThreshold: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5004
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            failureThreshold: 5
+          volumeMounts:
+            - name: firebase-sa
+              mountPath: /secrets
+              readOnly: true
+      volumes:
+        - name: firebase-sa
+          secret:
+            secretName: firebase-sa
