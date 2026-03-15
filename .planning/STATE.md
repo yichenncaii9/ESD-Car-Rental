@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: planning
-stopped_at: Phase 5 context gathered
-last_updated: "2026-03-15T02:20:10.046Z"
+stopped_at: Completed 05-01-PLAN.md (websocket_server upgrade and Phase 5 smoke tests)
+last_updated: "2026-03-15T03:17:29.180Z"
 last_activity: 2026-03-13 — Roadmap created; ready to begin Phase 1 planning
 progress:
   total_phases: 6
   completed_phases: 2
-  total_plans: 18
-  completed_plans: 21
+  total_plans: 21
+  completed_plans: 22
   percent: 94
 ---
 
@@ -118,6 +118,7 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04-composite-services P04 | 300 | 1 tasks | 1 files |
 | Phase 04-composite-services P05 | 2 | 1 tasks | 1 files |
 | Phase 04-composite-services P06 | 10 | 2 tasks | 2 files |
+| Phase 05-async-workers P01 | 1 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -170,6 +171,8 @@ Recent decisions affecting current work:
 - [Phase 04-composite-services]: 0% refund conservative fallback: pricing_service unreachable defaults to 0% refund to avoid over-refunding
 - [Phase 04-composite-services]: report_issue Phase A severity held from openai_wrapper response variable — not re-fetched from Firestore; ensures COMP-10 response shape without extra read
 - [Phase 04-composite-services]: resolve_issue sms_status written directly to Firestore on Twilio failure — report_service PUT /resolution cannot set sms_status field
+- [Phase 05-async-workers]: websocket_server emit shape: {**data, 'id': data.get('report_id')} — id alias required for ServiceDashboardView findIndex
+- [Phase 05-async-workers]: verify_phase5.sh uses check() for HTTP and log_check() with 2>/dev/null for docker-compose log grep
 
 ### Pending Todos
 
@@ -187,6 +190,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-15T02:20:10.043Z
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-async-workers/05-CONTEXT.md
+Last session: 2026-03-15T03:17:24.695Z
+Stopped at: Completed 05-01-PLAN.md (websocket_server upgrade and Phase 5 smoke tests)
+Resume file: None

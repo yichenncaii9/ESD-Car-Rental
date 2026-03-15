@@ -83,10 +83,10 @@
 
 ### WebSocket
 
-- [ ] **WS-01**: websocket_server runs on port 6100, Flask-SocketIO, part of the 17-container stack
+- [x] **WS-01**: websocket_server runs on port 6100, Flask-SocketIO, part of the 17-container stack
 - [x] **WS-02**: Vue.js frontend connects to websocket_server via Socket.IO on load of ServiceDashboard view
-- [ ] **WS-03**: websocket_server exposes a POST /notify endpoint that accepts an update payload and emits a Socket.IO event to connected clients
-- [ ] **WS-04**: When a Scenario 3 async event completes (twilio_wrapper or activity_log finishes), websocket_server pushes the update to the frontend without polling
+- [x] **WS-03**: websocket_server exposes a POST /notify endpoint that accepts an update payload and emits a Socket.IO event to connected clients
+- [x] **WS-04**: When a Scenario 3 async event completes (twilio_wrapper or activity_log finishes), websocket_server pushes the update to the frontend without polling
 
 ### Data & Seeding
 
@@ -192,10 +192,10 @@
 | WORK-05 | Phase 5 - Async Workers | Pending |
 | WORK-06 | Phase 5 - Async Workers | Pending |
 | WORK-07 | Phase 5 - Async Workers | Pending |
-| WS-01 | Phase 1 - Foundation (container) / Phase 5 - Async Workers (integration) | Pending |
+| WS-01 | Phase 1 - Foundation (container) / Phase 5 - Async Workers (integration) | Complete |
 | WS-02 | Phase 2 - Frontend (client: Socket.IO in ServiceDashboardView) / Phase 5 - Async Workers (server: websocket_server /notify endpoint) | Complete |
-| WS-03 | Phase 5 - Async Workers | Pending |
-| WS-04 | Phase 5 - Async Workers | Pending |
+| WS-03 | Phase 5 - Async Workers | Complete |
+| WS-04 | Phase 5 - Async Workers | Complete |
 | K8S-01 | Phase 6 - Kubernetes | Pending |
 | K8S-02 | Phase 6 - Kubernetes | Pending |
 | K8S-03 | Phase 6 - Kubernetes | Pending |
