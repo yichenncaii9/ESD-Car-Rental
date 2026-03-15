@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: twilio-worker
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: twilio-worker
+  template:
+    metadata:
+      labels:
+        app: twilio-worker
+    spec:
+      containers:
+        - name: twilio-worker
+          image: esd-twilio-worker:latest
+          imagePullPolicy: Never
+          env:
+            - name: RABBITMQ_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: common-config
+                  key: RABBITMQ_HOST
+            - name: RABBITMQ_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: common-config
+                  key: RABBITMQ_PORT
+            - name: WEBSOCKET_SERVER_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: common-config
+                  key: WEBSOCKET_SERVER_URL
+            - name: TWILIO_ACCOUNT_SID
+              valueFrom:
+                secretKeyRef:
+                  name: api-keys
+                  key: TWILIO_ACCOUNT_SID
+            - name: TWILIO_AUTH_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: api-keys
+                  key: TWILIO_AUTH_TOKEN
+            - name: TWILIO_FROM_NUMBER
+              valueFrom:
+                secretKeyRef:
+                  name: api-keys
+                  key: TWILIO_FROM_NUMBER
+            - name: TWILIO_SERVICE_TEAM_NUMBER
+              valueFrom:
+                secretKeyRef:
+                  name: api-keys
+                  key: TWILIO_SERVICE_TEAM_NUMBER
+          # No ports — AMQP consumer only, nothing calls into this worker over HTTP
+          # No livenessProbe — no HTTP endpoint to probe; pika retry self-heals on RabbitMQ startup

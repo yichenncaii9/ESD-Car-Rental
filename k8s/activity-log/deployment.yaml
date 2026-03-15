@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: activity-log
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: activity-log
+  template:
+    metadata:
+      labels:
+        app: activity-log
+    spec:
+      containers:
+        - name: activity-log
+          image: esd-activity-log:latest
+          imagePullPolicy: Never
+          env:
+            - name: RABBITMQ_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: common-config
+                  key: RABBITMQ_HOST
+            - name: RABBITMQ_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: common-config
+                  key: RABBITMQ_PORT
+            - name: WEBSOCKET_SERVER_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: common-config
+                  key: WEBSOCKET_SERVER_URL
+            - name: FIREBASE_PROJECT_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: activity-log-config
+                  key: FIREBASE_PROJECT_ID
+            - name: GOOGLE_APPLICATION_CREDENTIALS
+              value: /secrets/firebase-service-account.json
+          volumeMounts:
+            - name: firebase-sa
+              mountPath: /secrets
+              readOnly: true
+          # No ports — AMQP consumer only, nothing calls into this worker over HTTP
+          # No livenessProbe — no HTTP endpoint to probe; pika retry self-heals on RabbitMQ startup
+      volumes:
+        - name: firebase-sa
+          secret:
+            secretName: firebase-sa

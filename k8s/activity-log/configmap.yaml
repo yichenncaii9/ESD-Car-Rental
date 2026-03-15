@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: activity-log-config
+  namespace: default
+data:
+  FIREBASE_PROJECT_ID: "esd-rental-car"
