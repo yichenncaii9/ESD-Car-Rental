@@ -2,6 +2,9 @@
 firebase-service-account.json
 .env
 .env.local
+.env.example
+
+
 
 # Python
 __pycache__/

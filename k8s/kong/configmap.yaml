@@ -10,7 +10,7 @@ data:
 
     # KONG-10: Firebase JWT validation
     # Algorithm: RS256
-    # key_claim_name: iss — Kong looks up consumer by matching jwt_secrets.key against the token's iss claim
+    # key_claim_name: kid — Kong looks up consumer by matching jwt_secrets.key against the token's iss claim
     # Firebase iss format: https://securetoken.google.com/{PROJECT_ID}
     # Public key source: https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com
     # KEY ROTATION NOTE: Firebase rotates RS256 keys every ~7 days.
@@ -23,7 +23,7 @@ data:
       - username: firebase-frontend
         jwt_secrets:
           - algorithm: RS256
-            key: "https://securetoken.google.com/esd-rental-car"
+            key: "732ca96713b1dd172385084ce9f4381ad00cece4"
             rsa_public_key: |
               -----BEGIN PUBLIC KEY-----
               MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA7NWdih2XjxPTW/h1rHtS
@@ -33,6 +33,19 @@ data:
               omHd9wHJ7Z7WscnsEBdzfxeGmyRiZ2d5LLGl3/z8cr/m8glnzjDAG7maNB7v9A42
               OjjOliQp75RjDx1s5HO90blTa6/27pWdNphYSInRa9wvrtUZy3D0FxHQ4S8SMS44
               dQIDAQAB
+              -----END PUBLIC KEY-----
+            secret: "not-used-for-rs256"
+          - algorithm: RS256
+            key: "a2dfb8a38b52d9f09edcaa5070a0e8f0a9e098ba"
+            rsa_public_key: |
+              -----BEGIN PUBLIC KEY-----
+              MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAw1Jbt8Qsr6uBRI4XbKZY
+              uId9iw72IiYA0fu9y7ffbr7K1dqzKBm+2o/PiDPhY4NnHo+hE0ZjLZjJ6qPIOvtD
+              1sJv82LiFP5VOt8YNi6INo7Iq5osdjDrDtvE9D7Pwvp6bL2n6K19NCm5dryRaglx
+              OxhVDW2ckwsgX11mk940G37MC+S2+YT8wfgEN+RCUQ5/KVo45em9yR72hBzldq99
+              /pi0Sm20r50/T5emC8rd19S1aIpSwLs9r/0H3cw6KbFTtF3JQSFhwpzkftFq7Sks
+              wBOvwDAihcep+Pi5i591PkO57g3Tss6omGZRk7VeTJ5sAKgI7bBWcvBGyDtnGMTN
+              5QIDAQAB
               -----END PUBLIC KEY-----
             secret: "not-used-for-rs256"
 
@@ -77,7 +90,7 @@ data:
                   policy: local
               - name: jwt
                 config:
-                  key_claim_name: iss
+                  key_claim_name: kid
                   claims_to_verify:
                     - exp
 
@@ -120,7 +133,7 @@ data:
                   policy: local
               - name: jwt
                 config:
-                  key_claim_name: iss
+                  key_claim_name: kid
                   claims_to_verify:
                     - exp
 
@@ -163,7 +176,7 @@ data:
                   policy: local
               - name: jwt
                 config:
-                  key_claim_name: iss
+                  key_claim_name: kid
                   claims_to_verify:
                     - exp
 
@@ -206,7 +219,7 @@ data:
                   policy: local
               - name: jwt
                 config:
-                  key_claim_name: iss
+                  key_claim_name: kid
                   claims_to_verify:
                     - exp
 
@@ -249,7 +262,7 @@ data:
                   policy: local
               - name: jwt
                 config:
-                  key_claim_name: iss
+                  key_claim_name: kid
                   claims_to_verify:
                     - exp
 
@@ -292,7 +305,7 @@ data:
                   policy: local
               - name: jwt
                 config:
-                  key_claim_name: iss
+                  key_claim_name: kid
                   claims_to_verify:
                     - exp
 
@@ -335,7 +348,7 @@ data:
                   policy: local
               - name: jwt
                 config:
-                  key_claim_name: iss
+                  key_claim_name: kid
                   claims_to_verify:
                     - exp
 
@@ -378,7 +391,7 @@ data:
                   policy: local
               - name: jwt
                 config:
-                  key_claim_name: iss
+                  key_claim_name: kid
                   claims_to_verify:
                     - exp
 
@@ -421,6 +434,6 @@ data:
                   policy: local
               - name: jwt
                 config:
-                  key_claim_name: iss
+                  key_claim_name: kid
                   claims_to_verify:
                     - exp

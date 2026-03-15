@@ -2,15 +2,14 @@ import os, json, uuid, time
 import pika
 import requests
 
-RABBITMQ_HOST       = os.environ.get("RABBITMQ_HOST", "rabbitmq")
-RABBITMQ_PORT       = int(os.environ.get("RABBITMQ_PORT", 5672))
-WEBSOCKET_URL       = os.environ.get("WEBSOCKET_SERVER_URL", "http://websocket_server:6100")
-DRIVER_HOST         = os.environ.get("DRIVER_SERVICE_HOST", "driver_service:5003")
-SMU_SMS_URL         = "https://smuedu-dev.outsystemsenterprise.com/SMULab_Notification/rest/Notification/SendSMS"
-TWILIO_SERVICE_TEAM = os.environ.get("TWILIO_SERVICE_TEAM_NUMBER")
-EXCHANGE_NAME       = "report_topic"
-QUEUE_NAME          = "twilio_queue"
-ROUTING_KEY         = "report.new"
+RABBITMQ_HOST  = os.environ.get("RABBITMQ_HOST", "rabbitmq")
+RABBITMQ_PORT  = int(os.environ.get("RABBITMQ_PORT", 5672))
+WEBSOCKET_URL  = os.environ.get("WEBSOCKET_SERVER_URL", "http://websocket_server:6100")
+SMU_SMS_URL    = "https://smuedu-dev.outsystemsenterprise.com/SMULab_Notification/rest/Notification/SendSMS"
+RECIPIENTS     = ["+6590072631"]
+EXCHANGE_NAME  = "report_topic"
+QUEUE_NAME     = "twilio_queue"
+ROUTING_KEY    = "report.new"
 
 
 def send_sms(to, body):
@@ -51,32 +50,16 @@ def callback(ch, method, properties, body):
         vehicle_id = data.get("vehicle_id")
         severity   = data.get("severity")
         location   = data.get("location")
-        user_uid   = data.get("user_uid")
 
-        # Send SMS to service team
-        if TWILIO_SERVICE_TEAM:
-            msg = (
-                f"[ESD Rental] New incident reported. "
-                f"Report: {report_id} | Vehicle: {vehicle_id} | "
-                f"Severity: {severity} | Location: {location}"
-            )
-            sid, provider = send_sms(TWILIO_SERVICE_TEAM, msg)
+        # Send SMS to all recipients
+        msg = (
+            f"[ESD Rental] New incident reported. "
+            f"Report: {report_id} | Vehicle: {vehicle_id} | "
+            f"Severity: {severity} | Location: {location}"
+        )
+        for number in RECIPIENTS:
+            sid, provider = send_sms(number, msg)
             print(f"[twilio_wrapper] Service team SMS sent: {sid} ({provider})")
-
-        # Fetch driver phone and send driver SMS (non-fatal)
-        try:
-            r = requests.get(f"http://{DRIVER_HOST}/api/drivers/{user_uid}", timeout=5)
-            if r.status_code == 200:
-                driver_phone = r.json().get("phone_number")
-                if driver_phone:
-                    driver_msg = (
-                        f"[ESD Rental] Your incident report {report_id} has been received. "
-                        f"Our team is reviewing it."
-                    )
-                    sid2, provider2 = send_sms(driver_phone, driver_msg)
-                    print(f"[twilio_wrapper] Driver SMS sent: {sid2} ({provider2})")
-        except Exception as e:
-            print(f"[twilio_wrapper] Driver phone fetch failed (non-fatal): {e}")
 
         # POST to websocket_server
         try:
