@@ -6,9 +6,7 @@ RABBITMQ_HOST       = os.environ.get("RABBITMQ_HOST", "rabbitmq")
 RABBITMQ_PORT       = int(os.environ.get("RABBITMQ_PORT", 5672))
 WEBSOCKET_URL       = os.environ.get("WEBSOCKET_SERVER_URL", "http://websocket_server:6100")
 DRIVER_HOST         = os.environ.get("DRIVER_SERVICE_HOST", "driver_service:5003")
-TWILIO_ACCOUNT_SID  = os.environ.get("TWILIO_ACCOUNT_SID")
-TWILIO_AUTH_TOKEN   = os.environ.get("TWILIO_AUTH_TOKEN")
-TWILIO_FROM_NUMBER  = os.environ.get("TWILIO_FROM_NUMBER", "+15005550006")
+SMU_SMS_URL         = "https://smuedu-dev.outsystemsenterprise.com/SMULab_Notification/rest/Notification/SendSMS"
 TWILIO_SERVICE_TEAM = os.environ.get("TWILIO_SERVICE_TEAM_NUMBER")
 EXCHANGE_NAME       = "report_topic"
 QUEUE_NAME          = "twilio_queue"
@@ -17,12 +15,12 @@ ROUTING_KEY         = "report.new"
 
 def send_sms(to, body):
     try:
-        from twilio.rest import Client
-        client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
-        msg = client.messages.create(body=body, from_=TWILIO_FROM_NUMBER, to=to)
-        return msg.sid, "twilio"
+        r = requests.post(SMU_SMS_URL, json={"mobile": to, "message": body}, timeout=10)
+        if r.status_code == 200:
+            return r.json().get("status", "sent"), "smu"
+        raise Exception(f"SMU API returned {r.status_code}")
     except Exception as e:
-        print(f"[twilio_wrapper] Twilio failed, using mock: {e}")
+        print(f"[twilio_wrapper] SMU SMS failed, using mock: {e}")
         return f"mock_{uuid.uuid4().hex}", "fallback"
 
 
