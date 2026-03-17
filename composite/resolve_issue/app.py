@@ -21,7 +21,7 @@ except Exception as e:
 
 # Service host constants
 REPORT_HOST = os.environ.get("REPORT_SERVICE_HOST", "report_service:5004")
-TWILIO_HOST = os.environ.get("TWILIO_WRAPPER_HOST", "twilio_wrapper_http:6203")
+NOTIFICATION_HOST = os.environ.get("NOTIFICATION_WRAPPER_HOST", "notification_wrapper_http:6203")
 
 
 @app.route("/health")
@@ -47,7 +47,7 @@ def resolve_issue():
     if r.status_code != 200:
         return jsonify({"status": "error", "message": f"Report service error: {r.json().get('message', 'unknown')}"}), 502
 
-    # Step 2: Send SMS to driver via twilio_wrapper HTTP endpoint (COMP-11)
+    # Step 2: Send SMS to driver via notification_wrapper HTTP endpoint (COMP-11)
     # driver_phone is optional — if not provided, SMS cannot be sent
     sms_status = "unsent"
     if driver_phone:
@@ -56,16 +56,16 @@ def resolve_issue():
             f"Resolution: {resolution}. Thank you for using ESD Car Rental."
         )
         try:
-            r = requests.post(f"http://{TWILIO_HOST}/api/twilio/sms",
+            r = requests.post(f"http://{NOTIFICATION_HOST}/api/notification/sms",
                               json={"to": driver_phone, "body": sms_message}, timeout=10)
             if r.status_code == 200:
                 sms_status = "sent"
             else:
-                print(f"[resolve_issue] twilio_wrapper returned {r.status_code} — flagging sms_status=unsent")
+                print(f"[resolve_issue] notification_wrapper returned {r.status_code} — flagging sms_status=unsent")
         except Exception as e:
-            print(f"[resolve_issue] twilio_wrapper exception: {e} — flagging sms_status=unsent")
+            print(f"[resolve_issue] notification_wrapper exception: {e} — flagging sms_status=unsent")
     else:
-        print(f"[resolve_issue] No driver_phone provided — SMS not sent for report {report_id}")
+        print(f"[notification_wrapper] No driver_phone provided — SMS not sent for report {report_id}")
 
     # Step 3: Write sms_status to Firestore directly if unsent (COMP-11)
     # report_service PUT /resolution only updates the resolution field — cannot set sms_status

@@ -6,9 +6,9 @@ RABBITMQ_HOST  = os.environ.get("RABBITMQ_HOST", "rabbitmq")
 RABBITMQ_PORT  = int(os.environ.get("RABBITMQ_PORT", 5672))
 WEBSOCKET_URL  = os.environ.get("WEBSOCKET_SERVER_URL", "http://websocket_server:6100")
 SMU_SMS_URL    = "https://smuedu-dev.outsystemsenterprise.com/SMULab_Notification/rest/Notification/SendSMS"
-RECIPIENTS     = ["+6590072631"]
+RECIPIENTS     = ["+6590072631","+6598140023"]
 EXCHANGE_NAME  = "report_topic"
-QUEUE_NAME     = "twilio_queue"
+QUEUE_NAME     = "notification_queue"
 ROUTING_KEY    = "report.new"
 
 
@@ -19,7 +19,7 @@ def send_sms(to, body):
             return r.json().get("status", "sent"), "smu"
         raise Exception(f"SMU API returned {r.status_code}")
     except Exception as e:
-        print(f"[twilio_wrapper] SMU SMS failed, using mock: {e}")
+        print(f"[notification_wrapper] SMU SMS failed, using mock: {e}")
         return f"mock_{uuid.uuid4().hex}", "fallback"
 
 
@@ -33,11 +33,11 @@ def connect_with_retry(max_attempts=5):
                     heartbeat=60
                 )
             )
-            print(f"[twilio_wrapper] Connected to RabbitMQ on attempt {attempt}")
+            print(f"[notification_wrapper] Connected to RabbitMQ on attempt {attempt}")
             return connection
         except Exception as e:
             wait = 2 ** attempt
-            print(f"[twilio_wrapper] RabbitMQ not ready (attempt {attempt}/{max_attempts}): {e}. Retrying in {wait}s")
+            print(f"[notification_wrapper] RabbitMQ not ready (attempt {attempt}/{max_attempts}): {e}. Retrying in {wait}s")
             if attempt == max_attempts:
                 raise
             time.sleep(wait)
@@ -59,7 +59,7 @@ def callback(ch, method, properties, body):
         )
         for number in RECIPIENTS:
             sid, provider = send_sms(number, msg)
-            print(f"[twilio_wrapper] Service team SMS sent: {sid} ({provider})")
+            print(f"[notification_wrapper] Service team SMS sent: {sid} ({provider})")
 
         # POST to websocket_server
         try:
@@ -70,10 +70,10 @@ def callback(ch, method, properties, body):
                 timeout=5
             )
         except Exception as e:
-            print(f"[twilio_wrapper] websocket notify failed: {e}")
+            print(f"[notification_wrapper] websocket notify failed: {e}")
 
     except Exception as e:
-        print(f"[twilio_wrapper] callback error: {e}")
+        print(f"[notification_wrapper] callback error: {e}")
     finally:
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
@@ -86,7 +86,7 @@ def main():
     channel.queue_bind(queue=QUEUE_NAME, exchange=EXCHANGE_NAME, routing_key=ROUTING_KEY)
     channel.basic_qos(prefetch_count=1)
     channel.basic_consume(queue=QUEUE_NAME, on_message_callback=callback)
-    print(f"[twilio_wrapper] Waiting for messages on {QUEUE_NAME}...")
+    print(f"[notification_wrapper] Waiting for messages on {QUEUE_NAME}...")
     channel.start_consuming()
 
 
