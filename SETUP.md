@@ -46,7 +46,7 @@ cd ESDProj
 docker compose up --build
 
 # 4. Open the app
-open http://localhost:8080
+open http://localhost:30080
 
 # 5. Log in with one of the shared test accounts
 #    testdriver_a@test.com  or  testdriver_b@test.com
@@ -66,10 +66,11 @@ open http://localhost:8080
 
 | Service | Port |
 |---|---|
-| Frontend (Vue.js) | 8080 |
-| Kong API Gateway | 8000 |
-| WebSocket server | 6100 |
-| RabbitMQ admin | 15672 |
+| Frontend (Vue.js) | 30080 (k8s NodePort) |
+| Kong API Gateway | 30000 (k8s NodePort) |
+| Kong Admin API | 30001 (k8s NodePort) |
+| WebSocket server | 6100 (ClusterIP only) |
+| RabbitMQ admin | 15672 (ClusterIP only) |
 
 ---
 
