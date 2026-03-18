@@ -56,6 +56,68 @@ open http://localhost:30080
 
 ---
 
+## Start & Tear Down (CLI)
+
+### Start
+
+```bash
+# Apply all k8s manifests (idempotent — safe to re-run)
+kubectl apply -f k8s/shared/
+kubectl apply -f k8s/rabbitmq/
+kubectl apply -f k8s/kong/
+kubectl apply -f k8s/ --recursive
+
+# Watch pods come up
+kubectl get pods -w
+```
+
+### Stop (keep cluster, free resources)
+
+```bash
+# Scale everything down to 0 (preserves manifests, no data loss)
+kubectl scale deployment --all --replicas=0
+kubectl scale statefulset --all --replicas=0
+```
+
+### Restart after scaling down
+
+```bash
+kubectl scale deployment --all --replicas=1
+kubectl scale statefulset --all --replicas=1
+```
+
+### Full tear down (removes all deployed resources)
+
+```bash
+kubectl delete -f k8s/ --recursive
+```
+
+### Rebuild & redeploy frontend image
+
+```bash
+# Run from ESDProj/ root — bakes env vars into the Vite bundle
+docker build \
+  --build-arg VITE_FIREBASE_API_KEY="${VITE_FIREBASE_API_KEY}" \
+  --build-arg VITE_FIREBASE_AUTH_DOMAIN="${VITE_FIREBASE_AUTH_DOMAIN}" \
+  --build-arg VITE_FIREBASE_PROJECT_ID="${VITE_FIREBASE_PROJECT_ID}" \
+  --build-arg VITE_FIREBASE_STORAGE_BUCKET="${VITE_FIREBASE_STORAGE_BUCKET}" \
+  --build-arg VITE_FIREBASE_MESSAGING_SENDER_ID="${VITE_FIREBASE_MESSAGING_SENDER_ID}" \
+  --build-arg VITE_FIREBASE_APP_ID="${VITE_FIREBASE_APP_ID}" \
+  --build-arg VITE_GOOGLE_MAPS_KEY="${VITE_GOOGLE_MAPS_KEY}" \
+  --build-arg VITE_API_BASE_URL="http://localhost:30000" \
+  -t esd-frontend:latest \
+  ./frontend
+
+kubectl rollout restart deployment/frontend
+```
+
+> Tip: export your `.env` first so the `${}` vars are available in shell:
+> ```bash
+> export $(grep -v '^#' .env | xargs)
+> ```
+
+---
+
 ## Data Model
 
 - Single shared Firestore database (one Firebase project, owned by team lead)
