@@ -46,7 +46,7 @@ cd ESDProj
 docker compose up --build
 
 # 4. Open the app
-open http://localhost:30080
+open http://localhost:8080
 
 # 5. Log in with one of the shared test accounts
 #    testdriver_a@test.com  or  testdriver_b@test.com
@@ -58,28 +58,35 @@ open http://localhost:30080
 
 ## Start & Tear Down (CLI)
 
-### Start
+### After `git pull` — rebuild everything and redeploy (k8s)
 
 ```bash
-# Apply all k8s manifests (idempotent — safe to re-run)
-kubectl apply -f k8s/shared/
-kubectl apply -f k8s/rabbitmq/
-kubectl apply -f k8s/kong/
-kubectl apply -f k8s/ --recursive
+# One command: rebuilds all images (with k8s ports) + applies manifests + restarts pods
+./scripts/deploy-k8s.sh
+```
 
-# Watch pods come up
-kubectl get pods -w
+### After `git pull` — manifests only changed, no code changes
+
+```bash
+# Skip rebuild, just re-apply manifests and restart
+./scripts/deploy-k8s.sh --apply
+```
+
+### First time / fresh start
+
+```bash
+./scripts/deploy-k8s.sh   # builds + deploys everything
+kubectl get pods -w        # watch pods come up
 ```
 
 ### Stop (keep cluster, free resources)
 
 ```bash
-# Scale everything down to 0 (preserves manifests, no data loss)
 kubectl scale deployment --all --replicas=0
 kubectl scale statefulset --all --replicas=0
 ```
 
-### Restart after scaling down
+### Resume after scaling down
 
 ```bash
 kubectl scale deployment --all --replicas=1
@@ -92,30 +99,6 @@ kubectl scale statefulset --all --replicas=1
 kubectl delete -f k8s/ --recursive
 ```
 
-### Rebuild & redeploy frontend image
-
-```bash
-# Run from ESDProj/ root — bakes env vars into the Vite bundle
-docker build \
-  --build-arg VITE_FIREBASE_API_KEY="${VITE_FIREBASE_API_KEY}" \
-  --build-arg VITE_FIREBASE_AUTH_DOMAIN="${VITE_FIREBASE_AUTH_DOMAIN}" \
-  --build-arg VITE_FIREBASE_PROJECT_ID="${VITE_FIREBASE_PROJECT_ID}" \
-  --build-arg VITE_FIREBASE_STORAGE_BUCKET="${VITE_FIREBASE_STORAGE_BUCKET}" \
-  --build-arg VITE_FIREBASE_MESSAGING_SENDER_ID="${VITE_FIREBASE_MESSAGING_SENDER_ID}" \
-  --build-arg VITE_FIREBASE_APP_ID="${VITE_FIREBASE_APP_ID}" \
-  --build-arg VITE_GOOGLE_MAPS_KEY="${VITE_GOOGLE_MAPS_KEY}" \
-  --build-arg VITE_API_BASE_URL="http://localhost:30000" \
-  -t esd-frontend:latest \
-  ./frontend
-
-kubectl rollout restart deployment/frontend
-```
-
-> Tip: export your `.env` first so the `${}` vars are available in shell:
-> ```bash
-> export $(grep -v '^#' .env | xargs)
-> ```
-
 ---
 
 ## Data Model
@@ -126,13 +109,15 @@ kubectl rollout restart deployment/frontend
 
 ## Services & Ports
 
-| Service | Port |
-|---|---|
-| Frontend (Vue.js) | 30080 (k8s NodePort) |
-| Kong API Gateway | 30000 (k8s NodePort) |
-| Kong Admin API | 30001 (k8s NodePort) |
-| WebSocket server | 6100 (ClusterIP only) |
-| RabbitMQ admin | 15672 (ClusterIP only) |
+| Service | Docker Compose | Kubernetes (k8s) |
+|---|---|---|
+| Frontend (Vue.js) | 8080 | 30080 (NodePort) |
+| Kong API Gateway | 8000 | 30000 (NodePort) |
+| Kong Admin API | 8001 | 30001 (NodePort) |
+| WebSocket server | 6100 | ClusterIP only |
+| RabbitMQ admin | 15672 | ClusterIP only |
+
+> **Most teammates use Docker Compose** — use the left column. Kubernetes ports apply only if you're running the k8s manifests locally.
 
 ---
 
