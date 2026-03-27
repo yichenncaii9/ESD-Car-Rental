@@ -143,21 +143,22 @@ services:
       start_period: 20s
     restart: unless-stopped
 
-  pricing_service:
-    build:
-      context: ./atomic/pricing_service
-    container_name: pricing_service
-    ports:
-      - "5005:5005"
-    networks:
-      - rental-net
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5005/health"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
-      start_period: 20s
-    restart: unless-stopped
+  # pricing_service replaced by OutSystems — container disabled
+  # pricing_service:
+  #   build:
+  #     context: ./atomic/pricing_service
+  #   container_name: pricing_service
+  #   ports:
+  #     - "5005:5005"
+  #   networks:
+  #     - rental-net
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:5005/health"]
+  #     interval: 15s
+  #     timeout: 5s
+  #     retries: 3
+  #     start_period: 20s
+  #   restart: unless-stopped
 
   # ─────────────────────────────────────────────
   # Composite Services
@@ -172,6 +173,7 @@ services:
     environment:
       FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
       GOOGLE_APPLICATION_CREDENTIALS: /secrets/firebase-service-account.json
+      PRICING_SERVICE_HOST: kong:8000
     volumes:
       - ./firebase-service-account.json:/secrets/firebase-service-account.json:ro
     networks:
@@ -193,6 +195,7 @@ services:
     environment:
       FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
       GOOGLE_APPLICATION_CREDENTIALS: /secrets/firebase-service-account.json
+      PRICING_SERVICE_HOST: kong:8000
     volumes:
       - ./firebase-service-account.json:/secrets/firebase-service-account.json:ro
     networks:
