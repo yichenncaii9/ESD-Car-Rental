@@ -94,11 +94,6 @@ services:
             config:
               minute: 60
               policy: local
-          - name: jwt
-            config:
-              key_claim_name: kid
-              claims_to_verify:
-                - exp
 
   # 2. cancel-booking composite
   - name: cancel-booking-service
@@ -234,6 +229,7 @@ services:
     url: http://vehicle_service:5001
     routes:
       - name: vehicles-route
+        preserve_host: true
         paths:
           - /api/vehicles
         strip_path: false
@@ -266,17 +262,13 @@ services:
             config:
               minute: 60
               policy: local
-          - name: jwt
-            config:
-              key_claim_name: kid
-              claims_to_verify:
-                - exp
 
   # 6. booking atomic service
   - name: booking-service
     url: http://booking_service:5002
     routes:
       - name: bookings-route
+        preserve_host: true
         paths:
           - /api/bookings
         strip_path: false
@@ -363,6 +355,7 @@ services:
     url: http://report_service:5004
     routes:
       - name: reports-route
+        preserve_host: true
         paths:
           - /api/reports
         strip_path: false

@@ -11,7 +11,7 @@
         style="width: 100%; height: 480px; border-radius: 8px;"
       >
         <GMapMarker
-          v-for="v in vehicles"
+          v-for="v in availableVehicles"
           :key="v.id"
           :position="{ lat: v.location_lat || 1.3521, lng: v.location_lng || 103.8198 }"
           :clickable="true"
@@ -54,16 +54,17 @@
 
     <!-- Live vehicle list -->
     <div class="vehicle-list">
-      <h3>Available Vehicles <span class="count" v-if="vehicles.length">({{ vehicles.length }})</span></h3>
+      <h3>Available Vehicles <span class="count" v-if="availableVehicles.length">({{ availableVehicles.length }})</span></h3>
       <p v-if="loading" class="empty-state">Loading...</p>
-      <p v-else-if="!vehicles.length" class="empty-state">No vehicles available.</p>
+      <p v-else-if="vehicleLoadError" class="error-msg empty-state">{{ vehicleLoadError }}</p>
+      <p v-else-if="!availableVehicles.length" class="empty-state">No vehicles available.</p>
       <div v-else class="vehicle-cards">
         <div
-          v-for="v in vehicles"
+          v-for="v in availableVehicles"
           :key="v.id"
           class="vehicle-card"
-          :class="{ selected: selectedVehicle?.id === v.id, unavailable: v.status !== 'available' }"
-          @click="v.status === 'available' && selectVehicle(v)"
+          :class="{ selected: selectedVehicle?.id === v.id }"
+          @click="selectVehicle(v)"
         >
           <div class="vehicle-card-top">
             <span class="vehicle-type">{{ v.vehicle_type }}</span>
@@ -78,7 +79,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import axios from 'axios'
+import { computed, ref, onMounted } from 'vue'
 import api from '../axios'
 import { useAuthStore } from '../stores/auth'
 
@@ -88,11 +90,48 @@ const mapCenter     = ref({ lat: 1.3521, lng: 103.8198 })
 const vehicles      = ref([])
 const selectedVehicle = ref(null)
 const loading       = ref(false)
+const vehicleLoadError = ref('')
 const pickupDatetime = ref('')
 const hours         = ref(2)
 const submitting    = ref(false)
 const bookingError  = ref('')
 const bookingSuccess = ref('')
+
+const availableVehicles = computed(() =>
+  vehicles.value.filter((vehicle) =>
+    String(vehicle?.status || '').trim().toLowerCase() === 'available'
+  )
+)
+
+const envVehicleBaseUrl = (import.meta.env.VITE_VEHICLE_SERVICE_URL || '').trim()
+
+function isBrowserReachableBaseUrl(baseUrl) {
+  if (!baseUrl) return false
+  try {
+    const parsed = new URL(baseUrl)
+    const host = parsed.hostname
+    if (host === 'localhost' || host === '127.0.0.1') return true
+    // Docker/K8s internal DNS names are not reachable from browser JS.
+    if (host.includes('_')) return false
+    return host === window.location.hostname
+  } catch {
+    return false
+  }
+}
+
+const directVehicleBaseUrl = isBrowserReachableBaseUrl(envVehicleBaseUrl)
+  ? envVehicleBaseUrl
+  : 'http://localhost:5001'
+
+const vehicleApi = axios.create({
+  baseURL: directVehicleBaseUrl
+})
+
+const fallbackVehicleBaseUrls = [
+  directVehicleBaseUrl,
+  'http://localhost:5001',
+  'http://127.0.0.1:5001'
+].filter((url, index, list) => url && list.indexOf(url) === index)
 
 function selectVehicle(v) {
   selectedVehicle.value = v
@@ -100,19 +139,68 @@ function selectVehicle(v) {
   bookingSuccess.value = ''
 }
 
-onMounted(async () => {
+function normalizeVehicles(payload) {
+  if (Array.isArray(payload)) return payload
+
+  const rawVehicles =
+    payload?.data?.vehicles ||
+    payload?.data ||
+    payload?.vehicles ||
+    payload?.results ||
+    []
+
+  return Array.isArray(rawVehicles) ? rawVehicles : []
+}
+
+function vehicleLabel(vehicle) {
+  return [vehicle.make, vehicle.model, vehicle.year].filter(Boolean).join(' · ')
+}
+
+async function loadVehicles() {
   loading.value = true
+  vehicleLoadError.value = ''
   try {
-    const res = await api.get('/api/vehicles')
-    vehicles.value = res.data.data || res.data.vehicles || []
+    let res
+    let lastFallbackError = null
+
+    try {
+      res = await api.get('/api/vehicles')
+    } catch (err) {
+      // Fall back to direct service when gateway/auth/network issues happen.
+      for (const baseURL of fallbackVehicleBaseUrls) {
+        try {
+          res = await vehicleApi.get('/api/vehicles', { baseURL })
+          break
+        } catch (fallbackErr) {
+          lastFallbackError = fallbackErr
+        }
+      }
+
+      if (!res) {
+        throw lastFallbackError || err
+      }
+    }
+
+    vehicles.value = normalizeVehicles(res.data)
+    if (selectedVehicle.value) {
+      selectedVehicle.value =
+        vehicles.value.find((vehicle) => vehicle.id === selectedVehicle.value.id) || null
+    }
   } catch (err) {
     console.error('Failed to load vehicles:', err.message)
+    vehicles.value = []
+    vehicleLoadError.value =
+      err.response?.data?.message || 'Unable to load vehicles right now.'
   } finally {
     loading.value = false
   }
-})
+}
+
+onMounted(loadVehicles)
 
 async function submitBooking() {
+  if (!selectedVehicle.value) return
+
   submitting.value = true
   bookingError.value = ''
   bookingSuccess.value = ''
@@ -127,11 +215,12 @@ async function submitBooking() {
     })
     bookingSuccess.value = `Booking confirmed! ID: ${res.data.booking_id || res.data.id}`
     selectedVehicle.value = null
-    // Refresh vehicle list so booked vehicle shows as rented
-    const vRes = await api.get('/api/vehicles')
-    vehicles.value = vRes.data.data || vRes.data.vehicles || []
+    await loadVehicles()
   } catch (err) {
-    bookingError.value = err.response?.data?.error || 'Booking failed. Please try again.'
+    bookingError.value =
+      err.response?.data?.error ||
+      err.response?.data?.message ||
+      'Booking failed. Please try again.'
   } finally {
     submitting.value = false
   }

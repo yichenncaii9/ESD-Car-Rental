@@ -11,7 +11,9 @@ app.use(router)
 app.use(VueGoogleMaps, {
   load: {
     key: import.meta.env.VITE_GOOGLE_MAPS_KEY,
-    libraries: 'places'  // Required for GMapAutocomplete in ReportIncidentView.vue
+    libraries: 'places',  // Required for GMapAutocomplete in ReportIncidentView.vue
+    v: 'weekly',
+    loading: 'async'
   }
 })
 

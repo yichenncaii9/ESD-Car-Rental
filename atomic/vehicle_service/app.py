@@ -5,6 +5,19 @@ import os
 app = Flask(__name__)
 CORS(app)
 
+# Flask 3+ can reject requests when Host is not in TRUSTED_HOSTS.
+# Include local and service-discovery hostnames used by Kong / Docker / K8s.
+app.config["TRUSTED_HOSTS"] = [
+    "localhost",
+    "127.0.0.1",
+    "vehicle_service",
+    "vehicle_service:5001",
+    "vehicle-service",
+    "vehicle-service:5001",
+    "kong",
+    "kong:8000",
+]
+
 # Firestore init — wrapped in try/except so container starts even without credentials
 try:
     import firebase_admin

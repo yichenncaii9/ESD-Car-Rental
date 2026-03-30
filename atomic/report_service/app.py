@@ -6,6 +6,18 @@ import os
 app = Flask(__name__)
 CORS(app)
 
+# Flask 3+ may reject upstream Host headers unless explicitly trusted.
+app.config["TRUSTED_HOSTS"] = [
+    "localhost",
+    "127.0.0.1",
+    "report_service",
+    "report_service:5004",
+    "report-service",
+    "report-service:5004",
+    "kong",
+    "kong:8000",
+]
+
 # Firestore init — wrapped in try/except so container starts even without credentials
 try:
     import firebase_admin

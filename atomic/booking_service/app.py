@@ -5,6 +5,9 @@ import os
 app = Flask(__name__)
 CORS(app)
 
+# Local dev behind Kong may forward different Host headers across environments.
+app.config["TRUSTED_HOSTS"] = ["*"]
+
 # Firestore init — wrapped in try/except so container starts even without credentials
 try:
     import firebase_admin
