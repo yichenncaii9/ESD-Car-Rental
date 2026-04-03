@@ -5,8 +5,15 @@ import os
 app = Flask(__name__)
 CORS(app)
 
-# Local dev behind Kong may forward different Host headers across environments.
-app.config["TRUSTED_HOSTS"] = ["*"]
+# Local dev, Docker, and Kong use different Host headers in practice.
+# Be explicit so Flask/Werkzeug accepts browser and proxy requests.
+app.config["TRUSTED_HOSTS"] = [
+    "localhost",
+    "127.0.0.1",
+    "booking_service",
+    "booking-service",
+    "kong",
+]
 
 # Firestore init — wrapped in try/except so container starts even without credentials
 try:
@@ -49,7 +56,7 @@ def get_active_booking_by_user(uid):
         return jsonify({"status": "error", "message": "Firestore unavailable"}), 500
     docs = list(db.collection("bookings").where("user_uid", "==", uid).where("status", "==", "confirmed").stream())
     if not docs:
-        return jsonify({"status": "error", "message": "No active booking found"}), 404
+        return jsonify({"status": "ok", "data": None, "message": "No active booking found"}), 200
     booking = {"id": docs[0].id, **docs[0].to_dict()}
     return jsonify({"status": "ok", "data": booking}), 200
 

@@ -65,6 +65,7 @@
 </template>
 
 <script setup>
+import axios from 'axios'
 import { ref, onMounted } from 'vue'
 import api from '../axios'
 import { useAuthStore } from '../stores/auth'
@@ -82,6 +83,35 @@ const lookupError      = ref('')
 const cancelling       = ref(false)
 const looking          = ref(false)
 
+const envBookingBaseUrl = (import.meta.env.VITE_BOOKING_SERVICE_URL || '').trim()
+
+function isBrowserReachableBaseUrl(baseUrl) {
+  if (!baseUrl) return false
+  try {
+    const parsed = new URL(baseUrl)
+    const host = parsed.hostname
+    if (host === 'localhost' || host === '127.0.0.1') return true
+    if (host.includes('_')) return false
+    return host === window.location.hostname
+  } catch {
+    return false
+  }
+}
+
+const directBookingBaseUrl = isBrowserReachableBaseUrl(envBookingBaseUrl)
+  ? envBookingBaseUrl
+  : 'http://localhost:5002'
+
+const bookingApi = axios.create({
+  baseURL: directBookingBaseUrl
+})
+
+const fallbackBookingBaseUrls = [
+  directBookingBaseUrl,
+  'http://localhost:5002',
+  'http://127.0.0.1:5002'
+].filter((url, index, list) => url && list.indexOf(url) === index)
+
 function formatDate(dt) {
   if (!dt) return 'N/A'
   return new Date(dt).toLocaleString()
@@ -91,8 +121,29 @@ onMounted(async () => {
   try {
     const uid = authStore.currentUser?.uid
     if (!uid) return
-    const res = await api.get(`/api/bookings/user/${uid}/active`)
-    activeBooking.value = res.data.data || res.data
+    let res
+    let lastFallbackError = null
+
+    for (const baseURL of fallbackBookingBaseUrls) {
+      try {
+        res = await bookingApi.get(`/api/bookings/user/${uid}/active`, { baseURL })
+        break
+      } catch (fallbackErr) {
+        if (fallbackErr?.response?.status === 404) {
+          lastFallbackError = fallbackErr
+          break
+        }
+        lastFallbackError = fallbackErr
+      }
+    }
+
+    if (!res) {
+      throw lastFallbackError || new Error('Unable to load active booking')
+    }
+
+    const booking = res.data?.data ?? res.data
+    if (!booking) return
+    activeBooking.value = booking
   } catch {
     // No active booking — that's fine, show manual lookup only
   }
