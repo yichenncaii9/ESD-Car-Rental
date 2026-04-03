@@ -121,14 +121,12 @@ const envVehicleBaseUrl = (import.meta.env.VITE_VEHICLE_SERVICE_URL || '').trim(
 
 const carMarkerSvg = `
   <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48" fill="none">
-    <path d="M12.6 23.2a2.4 2.4 0 0 1 2.264-1.616h18.272a2.4 2.4 0 0 1 2.264 1.616l2.367 7.102c.08.242.121.496.121.75v4.148A2.4 2.4 0 0 1 35.488 37h-1.08a1.2 1.2 0 0 1-1.2-1.2v-.96H14.792v.96a1.2 1.2 0 0 1-1.2 1.2h-1.08a2.4 2.4 0 0 1-2.4-2.4v-4.148c0-.254.041-.508.121-.75l2.367-7.102Z" fill="#f8fafc"/>
-    <path d="M16.08 20.56 17.92 15.52h12.16l1.84 5.04H16.08Z" fill="#9bd3ff"/>
-    <path d="M19.2 14.08c0-.796.645-1.44 1.44-1.44h6.72c.795 0 1.44.644 1.44 1.44v1.44H19.2v-1.44Z" fill="#1f2937"/>
-    <circle cx="18.72" cy="30.76" r="2.76" fill="#111827"/>
-    <circle cx="29.28" cy="30.76" r="2.76" fill="#111827"/>
-    <path d="M12.6 23.2a2.4 2.4 0 0 1 2.264-1.616h18.272a2.4 2.4 0 0 1 2.264 1.616l2.367 7.102c.08.242.121.496.121.75v1.028H10.112v-1.028c0-.254.041-.508.121-.75l2.367-7.102Z" stroke="#1f2937" stroke-width="1.6" stroke-linejoin="round"/>
-    <path d="M16.08 20.56 17.92 15.52h12.16l1.84 5.04H16.08Z" stroke="#1f2937" stroke-width="1.6" stroke-linejoin="round"/>
-    <path d="M19.2 15.52v-1.44c0-.796.645-1.44 1.44-1.44h6.72c.795 0 1.44.644 1.44 1.44v1.44" stroke="#1f2937" stroke-width="1.6" stroke-linecap="round"/>
+    <path d="M24 2C15.163 2 8 9.163 8 18c0 12.271 14.252 25.481 14.859 26.037a1.68 1.68 0 0 0 2.282 0C25.748 43.481 40 30.271 40 18 40 9.163 32.837 2 24 2Z" fill="#102542"/>
+    <path d="M15.225 20.39a2 2 0 0 1 1.888-1.346h13.774a2 2 0 0 1 1.888 1.346l1.975 5.925a2 2 0 0 1 .102.632V31a2 2 0 0 1-2 2h-.9a1 1 0 0 1-1-1v-.8H17.048v.8a1 1 0 0 1-1 1h-.9a2 2 0 0 1-2-2v-4.053c0-.216.035-.43.102-.632l1.975-5.925Z" fill="#fff"/>
+    <path d="M18.106 18.2 19.64 14h8.72l1.533 4.2H18.107Z" fill="#7FC8F8"/>
+    <circle cx="18.8" cy="27.2" r="2.3" fill="#102542"/>
+    <circle cx="29.2" cy="27.2" r="2.3" fill="#102542"/>
+    <path d="M21 11.2c0-.663.537-1.2 1.2-1.2h3.6c.663 0 1.2.537 1.2 1.2V14H21v-2.8Z" fill="#102542"/>
   </svg>
 `.trim()
 
@@ -272,6 +270,12 @@ function createLocationPopupClass() {
       container.addEventListener('click', (event) => {
         event.stopPropagation()
       })
+      container.addEventListener('wheel', (event) => {
+        event.stopPropagation()
+      })
+      container.addEventListener('touchmove', (event) => {
+        event.stopPropagation()
+      })
 
       const closeButton = document.createElement('button')
       closeButton.type = 'button'
@@ -289,6 +293,12 @@ function createLocationPopupClass() {
 
       const list = document.createElement('div')
       list.className = 'map-location-panel__list'
+      list.addEventListener('wheel', (event) => {
+        event.stopPropagation()
+      })
+      list.addEventListener('touchmove', (event) => {
+        event.stopPropagation()
+      })
 
       this.group.vehicles.forEach((vehicle) => {
         const button = document.createElement('button')
