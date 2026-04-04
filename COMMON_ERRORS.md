@@ -34,10 +34,11 @@ cd frontend && rm package-lock.json && npm install
 ### 2b. Gitignored component referenced by Vite (current project)
 `DebugReportPanel.vue` is gitignored. Vite resolves dynamic imports at build time — even with `.catch()` — unless marked with `/* @vite-ignore */`. Teammates without the file get a build error.
 
-**Fix:** Already applied. The import in `ReportIncidentView.vue` uses:
+**Fix:** Already applied. The import in `ReportIncidentView.vue` uses a split string so Rollup cannot statically resolve it at build time:
 ```js
-import(/* @vite-ignore */ '../components/DebugReportPanel.vue').catch(() => ({ render: () => null }))
+import(/* @vite-ignore */ '../components/Debug' + 'ReportPanel.vue').catch(() => ({ render: () => null }))
 ```
+Note: `/* @vite-ignore */` alone is insufficient — it suppresses Vite's warning but Rollup still resolves the path. The string split defeats static analysis entirely.
 
 ### 2c. Line endings (CRLF vs LF)
 Windows commits CRLF line endings into shell scripts or `.env` files, breaking execution inside Linux containers.
