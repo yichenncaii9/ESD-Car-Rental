@@ -34,3 +34,6 @@ ESD-Car-Rental/
 
 # OS artifacts (recursive)
 **/.DS_Store
+
+# Local-only debug component — never commit
+frontend/src/components/DebugReportPanel.vue

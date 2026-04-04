@@ -395,6 +395,7 @@ services:
                 - exp
 
   # 9. pricing atomic service (OutSystems)
+  # No JWT plugin — composites call this route internally (no browser token available)
   - name: pricing-service
     url: https://personal-gavwz54n.outsystemscloud.com/TB_PricingService/rest/PricingService
     routes:
@@ -431,8 +432,3 @@ services:
             config:
               minute: 60
               policy: local
-          - name: jwt
-            config:
-              key_claim_name: kid
-              claims_to_verify:
-                - exp

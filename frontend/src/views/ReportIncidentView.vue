@@ -78,14 +78,22 @@
         {{ submitting ? 'Submitting...' : 'Submit Report' }}
       </button>
     </form>
+
+    <!-- ⚠️ TEMP DEBUG PANEL — gitignored, never committed -->
+    <DebugReportPanel ref="panel" />
   </div>
 </template>
 
 <script setup>
 import axios from 'axios'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, defineAsyncComponent } from 'vue'
 import api from '../axios'
 import { useAuthStore } from '../stores/auth'
+
+const DebugReportPanel = defineAsyncComponent(() =>
+  import('../components/DebugReportPanel.vue').catch(() => ({ render: () => null }))
+)
+const panel = ref(null)
 
 const authStore = useAuthStore()
 
@@ -195,19 +203,25 @@ async function submitReport() {
   submitting.value = true
   submitError.value = ''
   submitResult.value = null
+  const uid = authStore.currentUser?.uid
+  const payload = {
+    user_uid:    uid,
+    booking_id:  bookingId.value,
+    vehicle_id:  vehicleId.value,
+    description: description.value,
+    lat:         incidentLocation.value.lat,
+    lng:         incidentLocation.value.lng
+  }
+  panel.value?.logSubmit(payload, null)
   try {
-    const uid = authStore.currentUser?.uid
-    const res = await api.post('/api/report-issue', {
-      user_uid:    uid,
-      booking_id:  bookingId.value,
-      vehicle_id:  vehicleId.value,
-      description: description.value,
-      lat:         incidentLocation.value.lat,
-      lng:         incidentLocation.value.lng
-    })
+    const res = await api.post('/api/report-issue', payload)
     submitResult.value = res.data
+    panel.value?.logSubmit(payload, { ok: true, status: res.status, data: res.data })
+    await panel.value?.fetchRecentReports()
   } catch (err) {
-    submitError.value = err.response?.data?.message || err.response?.data?.error || 'Report submission failed. Please try again.'
+    const errData = err.response?.data || { message: err.message }
+    submitError.value = errData.message || errData.error || 'Report submission failed. Please try again.'
+    panel.value?.logSubmit(payload, { ok: false, status: err.response?.status, data: errData })
   } finally {
     submitting.value = false
   }

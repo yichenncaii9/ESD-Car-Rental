@@ -89,9 +89,12 @@ def report_issue():
     r = requests.post(f"http://{OPENAI_HOST}/api/openai/evaluate",
                       json={"description": description, "address": address}, timeout=15)
     if r.status_code == 200:
-        severity = r.json().get("severity", "medium")
+        openai_resp = r.json()
+        severity = openai_resp.get("severity", "medium")
+        ai_evaluation = openai_resp  # store full response { severity, provider }
     else:
         severity = "medium"
+        ai_evaluation = None
         print(f"[report_issue] OpenAI evaluate failed ({r.status_code}) — defaulting severity=medium")
 
     # Phase A Step 4: Persist report to report_service (COMP-08)
@@ -111,7 +114,7 @@ def report_issue():
     # report_service POST /reports creates with severity=None; evaluation endpoint sets it
     try:
         requests.put(f"http://{REPORT_HOST}/api/reports/{report_id}/evaluation",
-                     json={"severity": severity}, timeout=5)
+                     json={"severity": severity, "ai_evaluation": ai_evaluation}, timeout=5)
     except Exception as e:
         print(f"[report_issue] Severity update failed: {e} — severity stored in response only")
 

@@ -522,7 +522,6 @@ async function submitBooking() {
       err.response?.data?.error ||
       err.response?.data?.message ||
       'Booking failed. Please try again.'
-s
   } finally {
     submitting.value = false
   }
