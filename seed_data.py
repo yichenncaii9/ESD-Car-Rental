@@ -56,14 +56,14 @@ DRIVERS = [
         "name": "Test Driver A",
         "license_number": "S1111111A",
         "license_expiry": "2028-12-31",
-        "email": "testdriver_a@test.com",
+        "email": "testuser@email.com",
     },
     {
         "uid": TEST_ACCOUNT_B_UID,
         "name": "Test Driver B",
         "license_number": "S2222222B",
         "license_expiry": "2028-12-31",
-        "email": "testdriver_b@test.com",
+        "email": "testuserb@email.com",
     },
 ]
 
