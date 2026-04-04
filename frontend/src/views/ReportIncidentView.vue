@@ -91,7 +91,7 @@ import api from '../axios'
 import { useAuthStore } from '../stores/auth'
 
 const DebugReportPanel = defineAsyncComponent(() =>
-  import('../components/DebugReportPanel.vue').catch(() => ({ render: () => null }))
+  import(/* @vite-ignore */ '../components/DebugReportPanel.vue').catch(() => ({ render: () => null }))
 )
 const panel = ref(null)
 
