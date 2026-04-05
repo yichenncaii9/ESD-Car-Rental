@@ -10,7 +10,7 @@ _transform: true
 # If Kong starts returning 401 with "Invalid signature", re-fetch the key from the x509 endpoint above,
 # match the kid in your token's header, and update rsa_public_key in this file.
 # For production, use the kong-oidc plugin instead (supports JWKS auto-fetch).
-# Keys embedded: kid=732ca96713b1dd172385084ce9f4381ad00cece4 (expires 2026-03-30), kid=37300769a07e05116f7e5138fa9093685eebc240 (expires 2026-04-07)
+# Keys embedded: kid=732ca96713b1dd172385084ce9f4381ad00cece4 (expires 2026-03-30), kid=37300769a07e05116f7e5138fa9093685eebc240 (expires 2026-04-07), kid=5e82afb4ef69b76383069ac6b57e7e65203bfe96 (added 2026-04-05)
 
 consumers:
   - username: firebase-frontend
@@ -39,6 +39,19 @@ consumers:
           Wo1+2IOiExEsI/6Yp7v+N6kog8cu8c5RiJ0bW4kTcBIfwuWBOnYqf8WqDVTp0JRJ
           TwkUYxyuZz+PvXPLPZ6Pissr0k8sIgkSceV0GJAs4dzbK1kI86MxTj1/sijbqJ0B
           3QIDAQAB
+          -----END PUBLIC KEY-----
+        secret: "not-used-for-rs256"
+      - algorithm: RS256
+        key: "5e82afb4ef69b76383069ac6b57e7e65203bfe96"
+        rsa_public_key: |
+          -----BEGIN PUBLIC KEY-----
+          MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0sYLMUtF8V45W6UA76mz
+          EqWpgSiuV/GaiVoGEeGuIIubn1q2h1Ir32SINRnxTcgZax3Tnyr1Qw9sNIb2lMyZ
+          Frd14SQZBCYou5Wulo/xKlpJ6y7DY/I41oR701aJrxsH5ER5KHSsVQ5hC/wpsOPB
+          MvY6rg6Z4GcwMHP2iibSkSIEfdR6WqNz1Ooc4QRBavhbQyDAjqrLqFS8ObT/9nMx
+          Nq/YqLrndMKOkmxBbBtf/pbc4YNdsjWxWJ3wP5iIE/Rx/DELqUU2hkORznHmmeb3
+          h77sA9qBygwMYxrClokVXaH4INk+U3/mDROEsW8W7KPAe8oz00th1SIwElMuCaOS
+          hQIDAQAB
           -----END PUBLIC KEY-----
         secret: "not-used-for-rs256"
       - algorithm: RS256

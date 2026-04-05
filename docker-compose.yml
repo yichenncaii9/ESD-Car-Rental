@@ -332,7 +332,9 @@ services:
     ports:
       - "6100:6100"
     networks:
-      - rental-net
+      rental-net:
+        aliases:
+          - websocket-server
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:6100/health"]
       interval: 15s
@@ -352,7 +354,7 @@ services:
     environment:
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
-      WEBSOCKET_SERVER_URL: http://websocket_server:6100
+      WEBSOCKET_SERVER_URL: http://websocket-server:6100
     depends_on:
       rabbitmq:
         condition: service_healthy
@@ -369,7 +371,7 @@ services:
       RABBITMQ_PORT: 5672
       FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
       GOOGLE_APPLICATION_CREDENTIALS: /secrets/firebase-service-account.json
-      WEBSOCKET_SERVER_URL: http://websocket_server:6100
+      WEBSOCKET_SERVER_URL: http://websocket-server:6100
     volumes:
       - ./firebase-service-account.json:/secrets/firebase-service-account.json:ro
     depends_on:

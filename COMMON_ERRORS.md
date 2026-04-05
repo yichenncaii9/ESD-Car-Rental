@@ -108,3 +108,94 @@ docker-compose up --build -d booking_service && docker-compose restart kong
 **Cause:** Browser CORS blocks cross-origin requests to `localhost:15672`.
 
 **Fix:** Open the management UI directly: [http://localhost:15672/#/queues](http://localhost:15672/#/queues) (guest / guest)
+
+---
+
+## 8. Kong JWT 401 — `No credentials found for given 'kid'`
+
+**Symptom:** Authenticated routes (cancel-booking, report-issue, etc.) return 401 with `"No credentials found for given 'kid'"`. Other routes may work fine.
+
+**Cause:** Firebase rotates RS256 keys every ~7 days. A new `kid` is now being issued that does not appear in `kong.yml`'s `jwt_secrets` list at all. This is different from error #4 ("Invalid signature") — there the kid exists but the key content is wrong; here the kid is entirely missing.
+
+**How to diagnose:** Decode a fresh Firebase token at jwt.io and check the `kid` in the header. Compare against the `key:` fields in `kong.yml` consumers section.
+
+**Fix:**
+```bash
+curl -s https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com \
+  | python3 -c "
+import sys, json, subprocess
+keys = json.load(sys.stdin)
+for kid, cert in keys.items():
+    print(f'=== kid: {kid} ===')
+    result = subprocess.run(['openssl', 'x509', '-pubkey', '-noout'],
+        input=cert.encode(), capture_output=True)
+    print(result.stdout.decode())
+"
+```
+Add any kid not already in `kong.yml` consumers → `jwt_secrets`, then `docker-compose restart kong`.
+
+See `MEMORY.md` → `project_firebase_key_rotation.md` for the full procedure.
+
+---
+
+## 9. Internal Docker HTTP calls return 400 — `Host '...' is not trusted`
+
+**Symptom:** A worker or service making an internal HTTP call (e.g. `requests.post("http://websocket_server:6100/notify", ...)`) silently gets a 400 back. No exception is raised in Python (requests doesn't raise on 4xx). The receiving service logs nothing, and the calling service logs nothing — the failure is invisible.
+
+**Cause:** Werkzeug 3.1's `host_is_trusted()` validates the `Host` header against the regex `[a-z0-9.-]+`. **Underscores are not in this set.** Docker Compose service names with underscores (e.g. `websocket_server`, `booking_service`) are valid Docker DNS names but fail Werkzeug's host regex, so Flask 3 returns 400 before the route handler runs.
+
+Setting `app.config["TRUSTED_HOSTS"]` does NOT fix this — the regex check runs before the trusted-hosts check, and the IDNA encoder also rejects underscores, causing `return False` for every entry in the list.
+
+**Fix:** Give the service a hyphenated network alias and update callers to use it:
+
+In `docker-compose.yml` for the receiving service:
+```yaml
+services:
+  websocket_server:
+    networks:
+      rental-net:
+        aliases:
+          - websocket-server   # hyphen passes Werkzeug's [a-z0-9.-]+ regex
+```
+
+In callers' environment:
+```yaml
+WEBSOCKET_SERVER_URL: http://websocket-server:6100   # was websocket_server
+```
+
+Then `docker-compose up -d --build <affected services>`.
+
+**Note:** This affects any Flask 3 / Werkzeug 3.1+ service called internally by its underscored Docker service name. The bug is silent — add a `print(r.status_code, r.text)` after any `requests.post/get` if a call seems to vanish.
+
+---
+
+## 10. Frontend edits don't appear in the browser
+
+**Symptom:** You edit a `.vue` file in `frontend/src/`, reload the browser, and nothing changes.
+
+**Cause:** The frontend Docker container is a **pre-built static bundle** (Nginx serving files from `npm run build`). It is NOT a Vite dev server with HMR. Source edits on the host have no effect until the image is rebuilt.
+
+**Fix:**
+```bash
+docker-compose up -d --build frontend
+```
+Then hard-refresh the browser (`Cmd+Shift+R` / `Ctrl+Shift+R`) to bypass the browser cache.
+
+---
+
+## 11. Service Dashboard shows "No pending reports" despite reports existing in Firestore
+
+**Symptom:** The Service Dashboard loads, shows "No pending reports", even though `GET /api/reports/pending` returns data.
+
+**Cause (API shape mismatch):** `report_service` returns `{"status": "ok", "data": [...]}`. The Vue component was extracting `res.data.reports` (undefined) then falling back to `res.data` (the whole object), so `reports.value` became a plain object instead of an array. `reports.length` was `undefined`, `v-if="reports.length > 0"` evaluated to false. The Socket.IO `findIndex` call then threw `TypeError` because `reports.value` was no longer an array, breaking real-time updates too.
+
+**Fix:** Use `res.data.data || res.data.reports || []` and guard with `Array.isArray()`.
+
+**Cause (WebSocket events not reaching frontend):** The workers post to `websocket_server` via its Docker service name, which contains an underscore — see error #9. The POST silently returned 400, so `socketio.emit("report_update", ...)` was never called.
+
+**Combined checklist when dashboard is empty:**
+1. Check the diagnostic panel (API fetch status + Socket.IO connection status).
+2. Confirm `activity_log` logs show `[activity_log] Firestore write:` entries.
+3. Confirm `websocket_server` logs show `[websocket_server] /notify received:` after each report.
+4. If `/notify received` never appears: test with `docker exec activity_log python3 -c "import requests; r = requests.post('http://websocket-server:6100/notify', json={'test':1}, timeout=5); print(r.status_code)"` — should be 200.
+5. If Socket.IO shows "Not connected": check browser console for `connect_error` and confirm port 6100 is reachable from the browser's perspective.

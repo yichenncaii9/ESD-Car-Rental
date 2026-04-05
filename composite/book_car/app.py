@@ -44,6 +44,14 @@ def book_car():
     if not all([user_uid, vehicle_id, vehicle_type, pickup_datetime, hours]):
         return jsonify({"status": "error", "message": "Missing required fields"}), 400
 
+    # Guard: reject if user already has a confirmed booking
+    try:
+        r = requests.get(f"http://{BOOKING_HOST}/api/bookings/user/{user_uid}/active", timeout=5)
+        if r.status_code == 200 and r.json().get("data"):
+            return jsonify({"status": "error", "message": "You already have an active booking. Cancel it before making a new one."}), 409
+    except Exception as e:
+        print(f"[book_car] Could not check existing bookings: {e} — proceeding")
+
     # Step 1: Fetch driver record to get license_number
     r = requests.get(f"http://{DRIVER_HOST}/api/drivers/{user_uid}", timeout=5)
     if r.status_code != 200:

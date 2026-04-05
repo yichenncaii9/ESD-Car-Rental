@@ -13,7 +13,7 @@ function getCurrentUser() {
 
 const routes = [
   { path: '/login',             component: () => import('../views/LoginView.vue') },
-  { path: '/',                  redirect: '/book-car' },
+  { path: '/',                  component: () => import('../views/LandingView.vue') },
   { path: '/book-car',          component: () => import('../views/BookCarView.vue'),          meta: { requiresAuth: true } },
   { path: '/cancel-booking',    component: () => import('../views/CancelBookingView.vue'),    meta: { requiresAuth: true } },
   { path: '/report-incident',   component: () => import('../views/ReportIncidentView.vue'),   meta: { requiresAuth: true } },
@@ -24,9 +24,7 @@ const routes = [
 const router = createRouter({ history: createWebHistory(), routes })
 
 router.beforeEach(async (to) => {
-  if (to.meta.requiresAuth && !(await getCurrentUser())) {
-    return '/login'
-  }
+  if (to.meta.requiresAuth && !(await getCurrentUser())) return '/login'
 })
 
 export default router

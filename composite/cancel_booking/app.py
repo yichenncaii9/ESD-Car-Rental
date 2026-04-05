@@ -65,6 +65,13 @@ def cancel_booking():
         hours_before_pickup = 0
         print(f"[cancel_booking] Could not parse pickup_datetime: {pickup_datetime_str!r}")
 
+    # Reject cancellation if pickup time has already passed
+    if hours_before_pickup <= 0:
+        return jsonify({
+            "status": "error",
+            "message": "Cannot cancel a booking whose pickup time has already passed."
+        }), 400
+
     # Step 4: Fetch cancellation policy tiers from pricing_service
     total_price = float(booking.get("total_price", 0))
     refund_percent = 0
