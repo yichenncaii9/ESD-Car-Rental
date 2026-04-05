@@ -100,8 +100,11 @@ def update_report_evaluation(report_id):
     if not doc_ref.get().exists:
         return jsonify({"status": "error", "message": "Report not found"}), 404
     doc_ref.update({
-        "severity":      severity,
-        "ai_evaluation": body.get("ai_evaluation"),
+        "severity":           severity,
+        "diagnosis":          body.get("diagnosis"),
+        "recommended_action": body.get("recommended_action"),
+        "safe_to_drive":      body.get("safe_to_drive"),
+        "ai_evaluation":      body.get("ai_evaluation"),
     })
     return jsonify({"status": "ok", "message": "Evaluation updated"}), 200
 
