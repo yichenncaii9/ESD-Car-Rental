@@ -115,14 +115,27 @@
 
       <div class="payment-modal__body">
         <label class="payment-modal__label">Card Details</label>
-        <div id="stripe-card-element" class="stripe-card-box"></div>
-        <p v-if="cardError" class="error-msg" style="margin-top:8px">{{ cardError }}</p>
-        <p v-if="stripePublishableKey.startsWith('pk_test_')" class="stripe-test-hint">Test card: <code>4242 4242 4242 4242</code> · any future expiry · any CVC</p>
+        <div class="dummy-card-fields">
+          <div class="dummy-field-group">
+            <label class="dummy-field-label">Card Number</label>
+            <input class="dummy-field-input" type="text" value="4242 4242 4242 4242" readonly />
+          </div>
+          <div class="dummy-field-row">
+            <div class="dummy-field-group">
+              <label class="dummy-field-label">Expiry</label>
+              <input class="dummy-field-input" type="text" value="12/34" readonly />
+            </div>
+            <div class="dummy-field-group">
+              <label class="dummy-field-label">CVC</label>
+              <input class="dummy-field-input" type="text" value="123" readonly />
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="payment-modal__footer">
         <button type="button" class="btn-primary payment-confirm-btn"
-          :disabled="submitting || !!cardError"
+          :disabled="submitting"
           @click="submitBooking">
           {{ submitting ? 'Processing…' : `Pay SGD ${estimatedPrice?.toFixed(2)}` }}
         </button>
@@ -136,17 +149,11 @@
 
 <script setup>
 import axios from 'axios'
-import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import api from '../axios'
 import { useAuthStore } from '../stores/auth'
-import { loadStripe } from '@stripe/stripe-js'
 
-const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || ''
 const paymentModalOpen = ref(false)
-const stripeInstance   = ref(null)
-const cardElement      = ref(null)
-const cardError        = ref('')
-const cardMounted      = ref(false)
 
 const authStore = useAuthStore()
 
@@ -208,7 +215,7 @@ async function fetchPrice() {
   }
 }
 
-async function openPaymentModal() {
+function openPaymentModal() {
   if (!selectedVehicle.value || !pickupDatetime.value || !hours.value) {
     bookingError.value = 'Please select a vehicle, pickup time, and duration first.'
     return
@@ -219,39 +226,10 @@ async function openPaymentModal() {
   }
   bookingError.value = ''
   paymentModalOpen.value = true
-  await nextTick()
-  await mountCardElement()
-}
-
-async function mountCardElement() {
-  if (cardMounted.value) return
-  if (!stripeInstance.value) {
-    stripeInstance.value = await loadStripe(stripePublishableKey)
-    if (!stripeInstance.value) {
-      bookingError.value = 'Payment provider failed to load. Check your internet connection.'
-      paymentModalOpen.value = false
-      return
-    }
-  }
-  const elements = stripeInstance.value.elements()
-  cardElement.value = elements.create('card', {
-    style: {
-      base: { fontSize: '15px', color: '#1a1a2e', fontFamily: 'inherit', '::placeholder': { color: '#94a3b8' } },
-      invalid: { color: '#ef4444' },
-    },
-  })
-  cardElement.value.mount('#stripe-card-element')
-  cardElement.value.on('change', (event) => {
-    cardError.value = event.error ? event.error.message : ''
-  })
-  cardMounted.value = true
 }
 
 function closePaymentModal() {
   paymentModalOpen.value = false
-  if (cardElement.value) { cardElement.value.unmount(); cardElement.value = null }
-  cardMounted.value = false
-  cardError.value = ''
 }
 
 const submitting = ref(false)
@@ -709,27 +687,11 @@ async function submitBooking() {
     bookingError.value = 'You already have an active or upcoming booking. Cancel it first.'
     return
   }
-  if (!stripeInstance.value || !cardElement.value) {
-    bookingError.value = 'Payment form not ready. Please try again.'
-    return
-  }
-
   submitting.value = true
   bookingError.value = ''
   bookingSuccess.value = ''
 
   try {
-    // Step A: Tokenize card via Stripe.js
-    const { paymentMethod, error } = await stripeInstance.value.createPaymentMethod({
-      type: 'card',
-      card: cardElement.value,
-    })
-    if (error) {
-      cardError.value = error.message
-      return
-    }
-
-    // Step B: Submit booking with the payment_method ID
     const uid = authStore.currentUser?.uid
     const res = await api.post('/api/book-car', {
       user_uid:         uid,
@@ -737,7 +699,7 @@ async function submitBooking() {
       vehicle_type:     selectedVehicle.value.vehicle_type,
       pickup_datetime:  pickupDatetime.value,
       hours:            hours.value,
-      payment_method:   paymentMethod.id,
+      payment_method:   'pm_card_visa',
     })
 
     bookingSuccess.value = `Booking confirmed! ID: ${res.data.booking_id || res.data.id}`
@@ -1050,21 +1012,20 @@ async function submitBooking() {
 .payment-modal__amount { font-weight: 800; font-size: 18px; }
 .payment-modal__body { padding: 0 24px 8px; }
 .payment-modal__label { font-size: 12px; font-weight: 600; color: var(--c-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px; }
-.stripe-card-box {
+.dummy-card-fields { display: flex; flex-direction: column; gap: 12px; }
+.dummy-field-row { display: flex; gap: 12px; }
+.dummy-field-row .dummy-field-group { flex: 1; }
+.dummy-field-group { display: flex; flex-direction: column; gap: 4px; }
+.dummy-field-label { font-size: 11px; font-weight: 600; color: var(--c-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.dummy-field-input {
   border: 1.5px solid var(--c-border);
   border-radius: var(--radius-sm);
-  padding: 12px 14px;
+  padding: 10px 12px;
   background: var(--c-bg);
-  transition: border-color 0.15s;
-}
-.stripe-card-box:focus-within { border-color: var(--c-accent); }
-.stripe-test-hint {
-  font-size: 12px; color: var(--c-muted);
-  margin-top: 10px; line-height: 1.5;
-}
-.stripe-test-hint code {
-  font-family: monospace; background: var(--c-bg);
-  padding: 1px 5px; border-radius: 3px;
+  font-size: 14px; color: var(--c-dark);
+  font-family: monospace;
+  cursor: default;
+  width: 100%; box-sizing: border-box;
 }
 .payment-modal__footer {
   display: flex; gap: 10px; padding: 16px 24px 24px;
