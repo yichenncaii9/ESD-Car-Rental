@@ -61,8 +61,24 @@
               </span>
             </td>
             <td>{{ report.status || '—' }}</td>
-            <td>{{ report.diagnosis || '—' }}</td>
-            <td class="action-cell">{{ report.recommended_action || '—' }}</td>
+            <td class="expandable-cell">
+              <template v-if="report.diagnosis && report.diagnosis.length > 60">
+                <span>{{ expandedDiagnosis.has(report.id) ? report.diagnosis : report.diagnosis.slice(0, 60) + '…' }}</span>
+                <button class="expand-btn" @click="toggleDiagnosis(report.id)">
+                  {{ expandedDiagnosis.has(report.id) ? 'Less' : 'More' }}
+                </button>
+              </template>
+              <template v-else>{{ report.diagnosis || '—' }}</template>
+            </td>
+            <td class="expandable-cell">
+              <template v-if="report.recommended_action && report.recommended_action.length > 60">
+                <span>{{ expandedAction.has(report.id) ? report.recommended_action : report.recommended_action.slice(0, 60) + '…' }}</span>
+                <button class="expand-btn" @click="toggleAction(report.id)">
+                  {{ expandedAction.has(report.id) ? 'Less' : 'More' }}
+                </button>
+              </template>
+              <template v-else>{{ report.recommended_action || '—' }}</template>
+            </td>
             <td>
               <span v-if="report.safe_to_drive !== undefined && report.safe_to_drive !== null"
                     class="safe-badge"
@@ -91,6 +107,21 @@ import api from '../axios'
 
 const reports     = ref([])
 const wsConnected = ref(false)
+
+// Track which rows have their long-text fields expanded
+const expandedDiagnosis = ref(new Set())
+const expandedAction    = ref(new Set())
+
+function toggleDiagnosis(id) {
+  const s = new Set(expandedDiagnosis.value)
+  s.has(id) ? s.delete(id) : s.add(id)
+  expandedDiagnosis.value = s
+}
+function toggleAction(id) {
+  const s = new Set(expandedAction.value)
+  s.has(id) ? s.delete(id) : s.add(id)
+  expandedAction.value = s
+}
 const socketId    = ref('')
 const lastEvent   = ref('')
 const eventLog    = ref([])   // last 5 raw events
@@ -262,6 +293,18 @@ tr.flash { animation: flash-in 1.5s ease-out; }
 .location-cell { max-width: 200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .mono { font-family:'Courier New',monospace; font-size:12px; color: var(--c-muted); }
 
+.expandable-cell { max-width: 240px; }
+.expandable-cell span { word-break: break-word; line-height: 1.5; }
+.expand-btn {
+  display: inline-block; margin-left: 6px;
+  padding: 1px 7px; border-radius: 9999px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.3px;
+  background: var(--c-border); color: var(--c-muted);
+  border: none; cursor: pointer; white-space: nowrap;
+  vertical-align: middle; transition: background 0.15s, color 0.15s;
+}
+.expand-btn:hover { background: var(--c-accent); color: #fff; }
+
 .severity-badge {
   display: inline-block; padding: 3px 10px;
   border-radius: 9999px; font-size: 11px; font-weight: 700;
@@ -277,7 +320,7 @@ tr.flash { animation: flash-in 1.5s ease-out; }
 }
 .update-hint { margin-top: 14px; font-size: 12px; color: var(--c-muted); }
 
-.action-cell { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 .safe-badge { display: inline-block; padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; }
 .safe-badge.safe-yes { background: var(--c-success-bg); color: var(--c-success); }
 .safe-badge.safe-no { background: var(--c-error-bg); color: var(--c-error); }
