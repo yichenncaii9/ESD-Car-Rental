@@ -34,7 +34,16 @@
       </p>
     </div>
 
-    <!-- Report form -->
+    <!-- No active booking state -->
+    <div v-if="!bookingLoading && !activeBooking" class="empty-state">
+      <p class="empty-icon">🚗</p>
+      <p class="empty-title">No active booking found</p>
+      <p class="empty-body">You can only report an incident during an active rental. Please make a booking first.</p>
+      <button type="button" class="btn-primary empty-cta" @click="router.push('/book-car')">Book a Car</button>
+    </div>
+
+    <!-- Report form — only shown when there's a current active booking -->
+    <div v-if="activeBooking">
     <div class="section-step" style="margin-top:4px"><span class="step-num">2</span><span class="step-title">Incident Details</span></div>
     <form @submit.prevent="submitReport" class="report-form">
       <div class="form-group">
@@ -123,16 +132,32 @@
         </div>
       </div>
     </div>
+    </div><!-- end v-if="activeBooking" -->
   </div>
 </template>
 
 <script setup>
 import axios from 'axios'
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import api from '../axios'
 import { useAuthStore } from '../stores/auth'
 
 const authStore = useAuthStore()
+const router = useRouter()
+
+// Active booking — null means no valid booking in current time window
+const activeBooking  = ref(null)
+const bookingLoading = ref(true)
+
+// Returns true only if now falls within [pickup, pickup + hours]
+function isBookingCurrentlyActive(booking) {
+  if (!booking || booking.status !== 'confirmed') return false
+  const now    = Date.now()
+  const pickup = new Date(booking.pickup_datetime).getTime()
+  const end    = pickup + (booking.hours || 0) * 3600 * 1000
+  return now >= pickup && now <= end
+}
 
 // Default to central Singapore; overridden by geolocation on mount
 const incidentLocation = ref({ lat: 1.3521, lng: 103.8198 })
@@ -213,9 +238,12 @@ function closeCamera() {
   }
 }
 
+let validityTimer = null
+
 onUnmounted(() => {
   if (cameraStream.value) cameraStream.value.getTracks().forEach(t => t.stop())
   if (imagePreviewUrl.value?.startsWith('blob:')) URL.revokeObjectURL(imagePreviewUrl.value)
+  clearInterval(validityTimer)
 })
 
 const submitting  = ref(false)
@@ -251,22 +279,22 @@ const fallbackBookingBaseUrls = [
   'http://127.0.0.1:5002'
 ].filter((url, index, list) => url && list.indexOf(url) === index)
 
+function clearActiveBooking() {
+  activeBooking.value = null
+  bookingId.value = ''
+  vehicleId.value = ''
+}
+
 onMounted(async () => {
   // Auto-detect user location via browser Geolocation API
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        incidentLocation.value = {
-          lat: pos.coords.latitude,
-          lng: pos.coords.longitude
-        }
-      },
-      (err) => {
-        console.warn('Geolocation denied or unavailable:', err.message)
-      }
+      (pos) => { incidentLocation.value = { lat: pos.coords.latitude, lng: pos.coords.longitude } },
+      (err) => { console.warn('Geolocation denied or unavailable:', err.message) }
     )
   }
-  // Auto-fill booking_id and vehicle_id from active booking
+
+  // Fetch booking and validate against current time window
   try {
     const uid = authStore.currentUser?.uid
     if (!uid) return
@@ -278,25 +306,31 @@ onMounted(async () => {
         res = await bookingApi.get(`/api/bookings/user/${uid}/active`, { baseURL })
         break
       } catch (fallbackErr) {
-        if (fallbackErr?.response?.status === 404) {
-          lastFallbackError = fallbackErr
-          break
-        }
+        if (fallbackErr?.response?.status === 404) { lastFallbackError = fallbackErr; break }
         lastFallbackError = fallbackErr
       }
     }
 
-    if (!res) {
-      throw lastFallbackError || new Error('Unable to load active booking')
-    }
+    if (!res) throw lastFallbackError || new Error('Unable to load active booking')
 
     const booking = res.data?.data ?? res.data
-    if (!booking) return
-    if (booking?.id) bookingId.value = booking.id
-    if (booking?.vehicle_id) vehicleId.value = booking.vehicle_id
+    if (booking && isBookingCurrentlyActive(booking)) {
+      activeBooking.value = booking
+      bookingId.value  = booking.id        || ''
+      vehicleId.value  = booking.vehicle_id || ''
+    }
   } catch {
-    // No active booking — user can fill in manually
+    // No active booking — show empty state
+  } finally {
+    bookingLoading.value = false
   }
+
+  // Reactively expire the booking when its time window ends (check every 5 seconds)
+  validityTimer = setInterval(() => {
+    if (activeBooking.value && !isBookingCurrentlyActive(activeBooking.value)) {
+      clearActiveBooking()
+    }
+  }, 5000)
 })
 
 function onPlaceChanged(place) {
@@ -316,6 +350,11 @@ function onMarkerDrag(event) {
 }
 
 async function submitReport() {
+  // Re-validate booking window at submit time — guards against expired bookings
+  if (!activeBooking.value || !isBookingCurrentlyActive(activeBooking.value)) {
+    clearActiveBooking()
+    return
+  }
   submitting.value = true
   submitError.value = ''
   submitResult.value = null
@@ -423,6 +462,19 @@ h1 { font-size: 26px; font-weight: 800; color: var(--c-dark); letter-spacing: -0
 .result-card p:last-child { margin-bottom: 0; }
 
 .btn-primary { width: 100%; padding: 13px; justify-content: center; font-size: 15px; }
+
+.empty-state {
+  text-align: center;
+  padding: 56px 24px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.empty-icon { font-size: 40px; margin-bottom: 12px; }
+.empty-title { font-size: 18px; font-weight: 700; color: var(--c-dark); margin-bottom: 8px; }
+.empty-body  { font-size: 14px; color: var(--c-muted); margin-bottom: 24px; line-height: 1.6; }
+.empty-cta   { width: auto; padding: 11px 32px; display: inline-flex; }
 
 .photo-group { margin-top: 4px; }
 

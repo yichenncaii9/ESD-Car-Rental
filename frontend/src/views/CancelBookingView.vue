@@ -51,7 +51,7 @@
           Cancelled. Refund: ${{ manualCancelResult.refund_amount }} ({{ manualCancelResult.refund_status }})
         </p>
         <button
-          v-if="!manualCancelResult && lookedUpBooking.status === 'confirmed'"
+          v-if="!manualCancelResult && isBookingCancellable(lookedUpBooking)"
           @click="cancelBooking(lookedUpBooking.id, true)"
           class="btn-danger"
           :disabled="cancelling"
@@ -66,11 +66,19 @@
 
 <script setup>
 import axios from 'axios'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import api from '../axios'
 import { useAuthStore } from '../stores/auth'
 
 const authStore = useAuthStore()
+
+// Returns true only if booking is confirmed and pickup has not yet started
+// (cancellation is only valid before the rental window opens)
+function isBookingCancellable(booking) {
+  if (!booking || booking.status !== 'confirmed') return false
+  const pickup = new Date(booking.pickup_datetime).getTime()
+  return Date.now() < pickup
+}
 
 const activeBooking    = ref(null)
 const manualBookingId  = ref('')
@@ -117,6 +125,10 @@ function formatDate(dt) {
   return new Date(dt).toLocaleString()
 }
 
+let validityTimer = null
+
+onUnmounted(() => clearInterval(validityTimer))
+
 onMounted(async () => {
   try {
     const uid = authStore.currentUser?.uid
@@ -129,24 +141,28 @@ onMounted(async () => {
         res = await bookingApi.get(`/api/bookings/user/${uid}/active`, { baseURL })
         break
       } catch (fallbackErr) {
-        if (fallbackErr?.response?.status === 404) {
-          lastFallbackError = fallbackErr
-          break
-        }
+        if (fallbackErr?.response?.status === 404) { lastFallbackError = fallbackErr; break }
         lastFallbackError = fallbackErr
       }
     }
 
-    if (!res) {
-      throw lastFallbackError || new Error('Unable to load active booking')
-    }
+    if (!res) throw lastFallbackError || new Error('Unable to load active booking')
 
     const booking = res.data?.data ?? res.data
-    if (!booking) return
-    activeBooking.value = booking
+    // Only display if booking is still cancellable (confirmed + before pickup)
+    if (booking && isBookingCancellable(booking)) {
+      activeBooking.value = booking
+    }
   } catch {
-    // No active booking — that's fine, show manual lookup only
+    // No cancellable booking — show manual lookup only
   }
+
+  // Reactively hide the booking card once it's no longer cancellable
+  validityTimer = setInterval(() => {
+    if (activeBooking.value && !isBookingCancellable(activeBooking.value)) {
+      activeBooking.value = null
+    }
+  }, 5000)
 })
 
 async function lookupBooking() {
@@ -183,23 +199,87 @@ async function cancelBooking(bookingId, isManual = false) {
 </script>
 
 <style scoped>
-.view-container { max-width: 720px; margin: 0 auto; }
-h1 { margin-bottom: 24px; color: #1a1a2e; }
-.booking-card { background: white; padding: 24px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); margin-bottom: 24px; }
-.booking-card h3 { margin-bottom: 16px; color: #1a1a2e; }
-.booking-card p { margin-bottom: 8px; }
-.cancel-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee; }
-.warning { font-size: 0.875rem; color: #888; margin-bottom: 16px; }
-.manual-lookup { background: white; padding: 24px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
-.manual-lookup h3 { margin-bottom: 16px; color: #1a1a2e; }
+.view-container { max-width: 720px; margin: 0 auto; padding-bottom: 48px; }
+
+h1 {
+  font-size: 26px; font-weight: 800; color: var(--c-dark);
+  letter-spacing: -0.4px; margin-bottom: 6px;
+}
+/* policy strip above cards */
+.view-container::before {
+  content: '';
+  display: block;
+  height: 3px;
+  width: 48px;
+  background: var(--c-accent);
+  border-radius: 9999px;
+  margin-bottom: 20px;
+}
+
+.booking-card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-left: 3px solid var(--c-accent);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+}
+.booking-card h3 {
+  font-size: 11px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.8px; color: var(--c-muted); margin-bottom: 16px;
+}
+.booking-card p {
+  font-size: 14px; color: var(--c-dark); margin-bottom: 10px;
+  display: flex; gap: 8px;
+}
+.booking-card p strong {
+  min-width: 80px; color: var(--c-muted);
+  font-weight: 600; font-size: 12px;
+  text-transform: uppercase; letter-spacing: 0.3px;
+  flex-shrink: 0; padding-top: 1px;
+}
+
+.cancel-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--c-border); }
+.warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  color: #92400e;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  line-height: 1.6;
+}
+.warning::before {
+  content: '⚠';
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.manual-lookup {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+.manual-lookup h3 {
+  font-size: 15px; font-weight: 700; color: var(--c-dark); margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+.manual-lookup h3::before {
+  content: '';
+  width: 3px; height: 16px;
+  background: var(--c-border);
+  border-radius: 2px;
+  display: inline-block;
+}
+
 .lookup-form { display: flex; gap: 12px; align-items: flex-end; margin-bottom: 20px; }
-.form-group { flex: 1; }
-.form-group label { display: block; margin-bottom: 6px; color: #555; font-size: 0.9rem; }
-.form-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; }
-.error-msg { color: #e94560; font-size: 0.875rem; margin-top: 8px; }
-.success-msg { color: #2ecc71; font-size: 0.875rem; margin-top: 8px; }
-.btn-primary { padding: 10px 20px; background: #1a1a2e; color: white; border: none; border-radius: 4px; cursor: pointer; white-space: nowrap; }
-.btn-primary:disabled { background: #999; cursor: not-allowed; }
-.btn-danger { padding: 10px 20px; background: #e94560; color: white; border: none; border-radius: 4px; cursor: pointer; }
-.btn-danger:disabled { background: #999; cursor: not-allowed; }
+.lookup-form .form-group { flex: 1; margin-bottom: 0; }
 </style>
