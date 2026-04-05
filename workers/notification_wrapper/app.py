@@ -46,16 +46,22 @@ def connect_with_retry(max_attempts=5):
 def callback(ch, method, properties, body):
     try:
         data = json.loads(body)
-        report_id  = data.get("report_id")
-        vehicle_id = data.get("vehicle_id")
-        severity   = data.get("severity")
-        location   = data.get("location")
+        report_id          = data.get("report_id")
+        vehicle_id         = data.get("vehicle_id")
+        severity           = data.get("severity")
+        location           = data.get("location")
+        diagnosis          = data.get("diagnosis", "unknown")
+        recommended_action = data.get("recommended_action", "Inspect vehicle")
+        safe_to_drive      = data.get("safe_to_drive", False)
 
         # Send SMS to all recipients
+        safe_label = "Yes" if safe_to_drive else "No"
         msg = (
             f"[ESD Rental] New incident reported. "
             f"Report: {report_id} | Vehicle: {vehicle_id} | "
-            f"Severity: {severity} | Location: {location}"
+            f"Severity: {severity} | Location: {location} | "
+            f"Diagnosis: {diagnosis} | Action: {recommended_action} | "
+            f"Safe to drive: {safe_label}"
         )
         for number in RECIPIENTS:
             sid, provider = send_sms(number, msg)
