@@ -62,6 +62,7 @@ def create_driver():
         "email": body.get("email", ""),
         "license_number": license_number,
         "license_expiry": license_expiry,
+        "phone": body.get("phone", ""),
     }
     doc_ref.set(record)
     return jsonify({"status": "created", "data": record}), 201
@@ -78,7 +79,7 @@ def update_driver(uid):
         return jsonify({"status": "error", "message": "Driver not found"}), 404
 
     updates = {}
-    for field in ["name", "email", "license_number", "license_expiry"]:
+    for field in ["name", "email", "license_number", "license_expiry", "phone"]:
         if field in body:
             updates[field] = body[field]
 

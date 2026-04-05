@@ -57,6 +57,7 @@ DRIVERS = [
         "license_number": "S1111111A",
         "license_expiry": "2028-12-31",
         "email": "testuser@email.com",
+        "phone": "+6590072631",
     },
     {
         "uid": TEST_ACCOUNT_B_UID,
@@ -64,6 +65,7 @@ DRIVERS = [
         "license_number": "S2222222B",
         "license_expiry": "2028-12-31",
         "email": "testuserb@email.com",
+        "phone": "+6598140023",
     },
 ]
 
@@ -83,11 +85,8 @@ def seed_drivers():
     print("--- Seeding drivers ---")
     for d in DRIVERS:
         doc_ref = db.collection("drivers").document(d["license_number"])
-        if not doc_ref.get().exists:
-            doc_ref.set(d)
-            print(f"  Seeded: {d['license_number']} ({d['name']})")
-        else:
-            print(f"  Skipped: {d['license_number']} (already exists)")
+        doc_ref.set(d, merge=True)
+        print(f"  Upserted: {d['license_number']} ({d['name']})")
 
 
 if __name__ == "__main__":

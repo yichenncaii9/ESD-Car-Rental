@@ -21,6 +21,10 @@
             <label>Email</label>
             <input v-model="form.email" type="email" placeholder="your@email.com" :disabled="saving" />
           </div>
+          <div class="form-group">
+            <label>Phone Number</label>
+            <input v-model="form.phone" type="tel" placeholder="+65XXXXXXXX" :disabled="saving" />
+          </div>
         </div>
       </div>
     </div>
@@ -81,6 +85,7 @@ const form = ref({
   email:           '',
   license_number:  '',
   license_expiry:  '',
+  phone:           '',
 })
 
 const licenseExpired = computed(() => {
@@ -101,6 +106,7 @@ onMounted(async () => {
     form.value.email          = d.email          || form.value.email
     form.value.license_number = d.license_number || ''
     form.value.license_expiry = d.license_expiry || ''
+    form.value.phone          = d.phone          || ''
     driverExists.value = true
     statusMsg.value  = 'Driver record found — fields pre-filled.'
     statusType.value = 'success'
@@ -122,6 +128,7 @@ async function saveProfile() {
         name:           form.value.name,
         email:          form.value.email,
         license_expiry: form.value.license_expiry,
+        phone:          form.value.phone,
       })
       statusMsg.value  = 'Profile updated successfully.'
       statusType.value = 'success'
@@ -132,6 +139,7 @@ async function saveProfile() {
         email:          form.value.email,
         license_number: form.value.license_number,
         license_expiry: form.value.license_expiry,
+        phone:          form.value.phone,
       })
       driverExists.value = true
       statusMsg.value  = 'Driver profile registered successfully.'
