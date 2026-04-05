@@ -73,17 +73,23 @@
         <label>Incident Photo <span class="optional-badge">optional</span></label>
         <p class="field-hint">Attach a photo so AI can visually assess damage severity.</p>
 
-        <label class="photo-upload-btn" :class="{ 'has-photo': imagePreviewUrl }">
-          <input
-            type="file"
-            accept="image/*"
-            style="display:none"
-            :disabled="submitting"
-            @change="onPhotoSelected"
-          />
-          <span v-if="!imagePreviewUrl">+ Attach Photo</span>
-          <span v-else>Change Photo</span>
-        </label>
+        <div class="photo-actions">
+          <label class="photo-upload-btn" :class="{ 'has-photo': imagePreviewUrl }">
+            <input
+              type="file"
+              accept="image/*"
+              style="display:none"
+              :disabled="submitting"
+              @change="onPhotoSelected"
+            />
+            <span v-if="!imagePreviewUrl">+ Attach Photo</span>
+            <span v-else>Change Photo</span>
+          </label>
+          <button type="button" class="camera-btn" :disabled="submitting" @click="openCamera">
+            Take Photo
+          </button>
+        </div>
+        <p v-if="cameraError" class="error-msg" style="margin-top:8px;margin-bottom:0">{{ cameraError }}</p>
 
         <div v-if="imagePreviewUrl" class="photo-preview-wrap">
           <img :src="imagePreviewUrl" class="photo-preview-thumb" alt="Incident photo preview" />
@@ -109,12 +115,23 @@
 
     <!-- ⚠️ TEMP DEBUG PANEL — gitignored, never committed -->
     <DebugReportPanel ref="panel" />
+
+    <!-- Camera modal -->
+    <div v-if="cameraOpen" class="camera-overlay" @click.self="closeCamera">
+      <div class="camera-modal">
+        <video ref="videoRef" class="camera-preview" autoplay playsinline muted />
+        <div class="camera-controls">
+          <button type="button" class="btn-primary camera-capture-btn" @click="capturePhoto">Capture</button>
+          <button type="button" class="camera-cancel-btn" @click="closeCamera">Cancel</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import axios from 'axios'
-import { ref, onMounted, defineAsyncComponent } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, defineAsyncComponent } from 'vue'
 import api from '../axios'
 import { useAuthStore } from '../stores/auth'
 
@@ -131,7 +148,13 @@ const vehicleId   = ref('')
 const bookingId   = ref('')
 const description = ref('')
 const imageBase64 = ref('')        // empty string = no image attached
-const imagePreviewUrl = ref('')    // object URL for thumbnail display
+const imagePreviewUrl = ref('')    // blob URL (file upload) or data URL (camera capture)
+
+// Camera
+const cameraOpen  = ref(false)
+const cameraError = ref('')
+const videoRef    = ref(null)
+const cameraStream = ref(null)   // MediaStream — must be stopped on close/unmount
 
 function onPhotoSelected(event) {
   const file = event.target.files?.[0]
@@ -152,9 +175,56 @@ function onPhotoSelected(event) {
 
 function removePhoto() {
   imageBase64.value = ''
-  if (imagePreviewUrl.value) URL.revokeObjectURL(imagePreviewUrl.value)
+  // Only revoke blob URLs; data URLs (camera captures) have no object to revoke
+  if (imagePreviewUrl.value?.startsWith('blob:')) URL.revokeObjectURL(imagePreviewUrl.value)
   imagePreviewUrl.value = ''
 }
+
+async function openCamera() {
+  cameraError.value = ''
+  try {
+    cameraStream.value = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: false,
+    })
+    cameraOpen.value = true
+    // Attach stream to video element after Vue renders the modal
+    await nextTick()
+    if (videoRef.value) videoRef.value.srcObject = cameraStream.value
+  } catch (err) {
+    cameraError.value = err.name === 'NotAllowedError'
+      ? 'Camera access denied. Allow camera permission and try again.'
+      : `Camera unavailable: ${err.message}`
+  }
+}
+
+function capturePhoto() {
+  const video = videoRef.value
+  if (!video) return
+  const canvas = document.createElement('canvas')
+  canvas.width  = video.videoWidth  || 1280
+  canvas.height = video.videoHeight || 720
+  canvas.getContext('2d').drawImage(video, 0, 0)
+  const dataUrl = canvas.toDataURL('image/jpeg', 0.85)
+  imageBase64.value = dataUrl.split(',')[1] ?? ''
+  // Revoke old blob URL if present, then use dataURL directly as preview
+  if (imagePreviewUrl.value?.startsWith('blob:')) URL.revokeObjectURL(imagePreviewUrl.value)
+  imagePreviewUrl.value = dataUrl
+  closeCamera()
+}
+
+function closeCamera() {
+  cameraOpen.value = false
+  if (cameraStream.value) {
+    cameraStream.value.getTracks().forEach(t => t.stop())
+    cameraStream.value = null
+  }
+}
+
+onUnmounted(() => {
+  if (cameraStream.value) cameraStream.value.getTracks().forEach(t => t.stop())
+  if (imagePreviewUrl.value?.startsWith('blob:')) URL.revokeObjectURL(imagePreviewUrl.value)
+})
 
 const submitting  = ref(false)
 const submitError = ref('')
@@ -432,4 +502,80 @@ h1 { font-size: 26px; font-weight: 800; color: var(--c-dark); letter-spacing: -0
   transition: background 0.15s;
 }
 .remove-photo-btn:hover { background: #fef2f2; }
+
+.photo-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.camera-btn {
+  padding: 9px 18px;
+  border: 1.5px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-dark);
+  background: var(--c-bg);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.camera-btn:hover:not(:disabled) { border-color: var(--c-accent); background: var(--c-surface); }
+.camera-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Camera modal overlay */
+.camera-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.camera-modal {
+  background: #000;
+  border-radius: var(--radius);
+  overflow: hidden;
+  max-width: 640px;
+  width: 100%;
+  margin: 16px;
+}
+
+.camera-preview {
+  width: 100%;
+  display: block;
+  max-height: 60vh;
+  object-fit: cover;
+  background: #111;
+}
+
+.camera-controls {
+  display: flex;
+  gap: 10px;
+  padding: 14px 16px;
+  background: #111;
+  justify-content: center;
+}
+
+.camera-capture-btn {
+  width: auto;
+  padding: 11px 32px;
+  font-size: 14px;
+}
+
+.camera-cancel-btn {
+  padding: 11px 24px;
+  border: 1.5px solid #444;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  color: #aaa;
+  background: transparent;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.camera-cancel-btn:hover { border-color: #888; color: #fff; }
 </style>
