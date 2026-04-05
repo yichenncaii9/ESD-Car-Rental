@@ -65,6 +65,7 @@ def report_issue():
     lat = body.get("lat")
     lng = body.get("lng")
     description = body.get("description", "")
+    image_base64 = body.get("image_base64")  # optional; forwarded to openai_wrapper for vision
 
     if not all([booking_id, vehicle_id, user_uid, lat is not None, lng is not None]):
         return jsonify({"status": "error", "message": "Missing required fields"}), 400
@@ -86,8 +87,11 @@ def report_issue():
         print(f"[report_issue] Maps geocode failed ({r.status_code}) — using coordinates")
 
     # Phase A Step 3: Classify severity via OpenAI (COMP-08)
+    openai_payload = {"description": description, "address": address}
+    if image_base64:
+        openai_payload["image_base64"] = image_base64
     r = requests.post(f"http://{OPENAI_HOST}/api/openai/evaluate",
-                      json={"description": description, "address": address}, timeout=15)
+                      json=openai_payload, timeout=15)
     if r.status_code == 200:
         openai_resp = r.json()
         severity = openai_resp.get("severity", "medium")
