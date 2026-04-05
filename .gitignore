@@ -37,3 +37,6 @@ ESD-Car-Rental/
 
 # Local-only debug component — never commit
 frontend/src/components/DebugReportPanel.vue
+
+# Git worktrees — never commit
+.worktrees/
