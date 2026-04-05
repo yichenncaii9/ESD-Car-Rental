@@ -72,18 +72,27 @@ def book_car():
         return jsonify({"status": "error", "message": f"Driver license invalid: {reason}"}), 400
 
     # Step 3: Check vehicle availability
-    r = requests.get(f"http://{VEHICLE_HOST}/api/vehicles/{vehicle_id}", timeout=5)
+    try:
+        r = requests.get(f"http://{VEHICLE_HOST}/api/vehicles/{vehicle_id}", timeout=5)
+    except Exception as e:
+        print(f"[book_car] vehicle_service unreachable: {e}")
+        return jsonify({"status": "error", "message": "Vehicle service temporarily unavailable. Please try again."}), 503
     if r.status_code == 404:
         return jsonify({"status": "error", "message": "Vehicle not found"}), 404
     if r.status_code != 200:
-        return jsonify({"status": "error", "message": "Vehicle service error"}), 502
+        print(f"[book_car] vehicle_service returned {r.status_code}: {r.text[:200]}")
+        return jsonify({"status": "error", "message": "Vehicle service temporarily unavailable. Please try again."}), 503
     vehicle = r.json().get("data", r.json())
     if vehicle.get("status") != "available":
         return jsonify({"status": "error", "message": "Vehicle not available"}), 409
 
     # Step 4: Lock vehicle (set status="rented") before charging — prevents double-booking
-    r = requests.put(f"http://{VEHICLE_HOST}/api/vehicles/{vehicle_id}/status",
-                     json={"status": "rented"}, timeout=5)
+    try:
+        r = requests.put(f"http://{VEHICLE_HOST}/api/vehicles/{vehicle_id}/status",
+                         json={"status": "rented"}, timeout=5)
+    except Exception as e:
+        print(f"[book_car] vehicle lock failed: {e}")
+        return jsonify({"status": "error", "message": "Vehicle service temporarily unavailable. Please try again."}), 503
     if r.status_code != 200:
         return jsonify({"status": "error", "message": "Failed to lock vehicle"}), 502
 

@@ -125,14 +125,20 @@ def cancel_booking():
         except Exception as e:
             print(f"[cancel_booking] Firestore refund_status update failed: {e}")
 
-    # Step 8: Release vehicle
+    # Step 8: Release vehicle — retry once on failure
     vehicle_id = booking.get("vehicle_id")
     if vehicle_id:
-        try:
-            requests.put(f"http://{VEHICLE_HOST}/api/vehicles/{vehicle_id}/status",
-                         json={"status": "available"}, timeout=5)
-        except Exception as e:
-            print(f"[cancel_booking] Vehicle release failed: {e}")
+        for attempt in range(2):
+            try:
+                rv = requests.put(f"http://{VEHICLE_HOST}/api/vehicles/{vehicle_id}/status",
+                                  json={"status": "available"}, timeout=5)
+                if rv.status_code == 200:
+                    break
+                print(f"[cancel_booking] Vehicle release attempt {attempt+1} returned {rv.status_code}")
+            except Exception as e:
+                print(f"[cancel_booking] Vehicle release attempt {attempt+1} failed: {e}")
+        else:
+            print(f"[cancel_booking] WARNING: vehicle {vehicle_id} may be stuck in rented state after cancellation")
 
     # Return COMP-07 response shape
     return jsonify({
