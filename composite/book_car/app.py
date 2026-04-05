@@ -39,6 +39,7 @@ def book_car():
     vehicle_type = body.get("vehicle_type")
     pickup_datetime = body.get("pickup_datetime")
     hours = body.get("hours")
+    payment_method = body.get("payment_method")   # tokenized by Stripe.js frontend
 
     if not all([user_uid, vehicle_id, vehicle_type, pickup_datetime, hours]):
         return jsonify({"status": "error", "message": "Missing required fields"}), 400
@@ -89,8 +90,11 @@ def book_car():
     total_price = r.json().get("total", 0)
 
     # Step 6: Charge Stripe
+    charge_body = {"amount": total_price, "currency": "sgd"}
+    if payment_method:
+        charge_body["payment_method"] = payment_method
     r = requests.post(f"http://{STRIPE_HOST}/api/stripe/charge",
-                      json={"amount": total_price, "currency": "sgd"}, timeout=10)
+                      json=charge_body, timeout=10)
     if r.status_code != 200:
         # Rollback vehicle lock
         requests.put(f"http://{VEHICLE_HOST}/api/vehicles/{vehicle_id}/status",

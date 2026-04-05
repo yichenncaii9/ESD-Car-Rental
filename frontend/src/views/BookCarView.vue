@@ -117,7 +117,7 @@
         <label class="payment-modal__label">Card Details</label>
         <div id="stripe-card-element" class="stripe-card-box"></div>
         <p v-if="cardError" class="error-msg" style="margin-top:8px">{{ cardError }}</p>
-        <p class="stripe-test-hint">Test card: <code>4242 4242 4242 4242</code> · any future expiry · any CVC</p>
+        <p v-if="stripePublishableKey.startsWith('pk_test_')" class="stripe-test-hint">Test card: <code>4242 4242 4242 4242</code> · any future expiry · any CVC</p>
       </div>
 
       <div class="payment-modal__footer">
@@ -227,6 +227,11 @@ async function mountCardElement() {
   if (cardMounted.value) return
   if (!stripeInstance.value) {
     stripeInstance.value = await loadStripe(stripePublishableKey)
+    if (!stripeInstance.value) {
+      bookingError.value = 'Payment provider failed to load. Check your internet connection.'
+      paymentModalOpen.value = false
+      return
+    }
   }
   const elements = stripeInstance.value.elements()
   cardElement.value = elements.create('card', {
@@ -331,7 +336,6 @@ function selectVehicle(vehicle) {
   selectedVehicle.value = vehicle
   bookingError.value = ''
   bookingSuccess.value = ''
-  fetchPrice()
 
   const group = locationGroups.value.find((entry) =>
     entry.vehicles.some((candidate) => candidate.id === vehicle.id)
@@ -721,7 +725,7 @@ async function submitBooking() {
       card: cardElement.value,
     })
     if (error) {
-      bookingError.value = error.message
+      cardError.value = error.message
       return
     }
 
