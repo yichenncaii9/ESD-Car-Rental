@@ -113,9 +113,6 @@
       </button>
     </form>
 
-    <!-- ⚠️ TEMP DEBUG PANEL — gitignored, never committed -->
-    <DebugReportPanel ref="panel" />
-
     <!-- Camera modal -->
     <div v-if="cameraOpen" class="camera-overlay" @click.self="closeCamera">
       <div class="camera-modal">
@@ -131,14 +128,9 @@
 
 <script setup>
 import axios from 'axios'
-import { ref, onMounted, onUnmounted, nextTick, defineAsyncComponent } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import api from '../axios'
 import { useAuthStore } from '../stores/auth'
-
-const DebugReportPanel = defineAsyncComponent(() =>
-  import(/* @vite-ignore */ '../components/Debug' + 'ReportPanel.vue').catch(() => ({ render: () => null }))
-)
-const panel = ref(null)
 
 const authStore = useAuthStore()
 
@@ -337,16 +329,12 @@ async function submitReport() {
     lng:         incidentLocation.value.lng,
     ...(imageBase64.value ? { image_base64: imageBase64.value } : {}),
   }
-  panel.value?.logSubmit(payload, null)
   try {
     const res = await api.post('/api/report-issue', payload)
     submitResult.value = res.data
-    panel.value?.logSubmit(payload, { ok: true, status: res.status, data: res.data })
-    await panel.value?.fetchRecentReports()
   } catch (err) {
     const errData = err.response?.data || { message: err.message }
     submitError.value = errData.message || errData.error || 'Report submission failed. Please try again.'
-    panel.value?.logSubmit(payload, { ok: false, status: err.response?.status, data: errData })
   } finally {
     submitting.value = false
   }

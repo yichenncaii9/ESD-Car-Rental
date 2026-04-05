@@ -3,11 +3,34 @@
     <div class="header-row">
       <h1>Service Dashboard</h1>
       <span class="ws-status" :class="wsConnected ? 'connected' : 'disconnected'">
+        <span class="ws-status-dot" aria-hidden="true"></span>
         {{ wsConnected ? 'Live' : 'Connecting...' }}
       </span>
     </div>
 
     <p class="subtitle">Pending incident reports requiring service team attention.</p>
+
+    <!-- Diagnostic panel -->
+    <div class="diag-panel">
+      <div class="diag-row">
+        <span class="diag-label">Socket.IO</span>
+        <span :class="['diag-val', wsConnected ? 'ok' : 'err']">
+          {{ wsConnected ? `Connected (${socketId})` : 'Not connected' }}
+        </span>
+      </div>
+      <div class="diag-row">
+        <span class="diag-label">Last event</span>
+        <span class="diag-val" style="font-family:monospace;font-size:0.78rem">
+          {{ lastEvent || '—' }}
+        </span>
+      </div>
+      <div v-if="eventLog.length > 0" class="diag-row event-log-row">
+        <span class="diag-label">Event log</span>
+        <ul class="event-log">
+          <li v-for="(e, i) in eventLog" :key="i">{{ e }}</li>
+        </ul>
+      </div>
+    </div>
 
     <div v-if="reports.length > 0" class="table-container">
       <table>
@@ -24,7 +47,7 @@
           <tr
             v-for="report in reports"
             :key="report.id"
-            :class="severityClass(report.severity)"
+            :class="[severityClass(report.severity), report._flash ? 'flash' : '']"
           >
             <td class="mono">{{ report.id }}</td>
             <td>{{ report.vehicle_id || '—' }}</td>
@@ -34,7 +57,7 @@
                 {{ report.severity || 'pending' }}
               </span>
             </td>
-            <td>{{ report.status }}</td>
+            <td>{{ report.status || '—' }}</td>
           </tr>
         </tbody>
       </table>
@@ -55,6 +78,9 @@ import api from '../axios'
 
 const reports     = ref([])
 const wsConnected = ref(false)
+const socketId    = ref('')
+const lastEvent   = ref('')
+const eventLog    = ref([])   // last 5 raw events
 let socket = null
 
 function formatCoords(report) {
@@ -67,17 +93,34 @@ function severityClass(severity) {
   return map[severity] || ''
 }
 
+function logEvent(data) {
+  const ts = new Date().toLocaleTimeString()
+  const summary = `[${ts}] report_id=${data.report_id ?? data.id ?? '?'} event=${data.event ?? '?'} severity=${data.severity ?? '?'}`
+  lastEvent.value = summary
+  eventLog.value = [summary, ...eventLog.value].slice(0, 5)
+}
+
+function flashRow(id) {
+  const idx = reports.value.findIndex(r => r.id === id)
+  if (idx < 0) return
+  reports.value[idx] = { ...reports.value[idx], _flash: true }
+  setTimeout(() => {
+    const i = reports.value.findIndex(r => r.id === id)
+    if (i >= 0) reports.value[i] = { ...reports.value[i], _flash: false }
+  }, 1500)
+}
+
 onMounted(async () => {
   // Fetch initial pending reports
   try {
     const res = await api.get('/api/reports/pending')
-    reports.value = res.data.reports || res.data || []
+    const data = res.data.data || res.data.reports || []
+    reports.value = Array.isArray(data) ? data : []
   } catch (err) {
-    console.error('Failed to load pending reports:', err.message)
+    console.error('Failed to load pending reports:', err)
   }
 
   // Connect Socket.IO to websocket_server
-  // Event name 'report_update' — Phase 5 websocket_server MUST emit this exact name
   socket = io('http://localhost:6100', {
     transports: ['websocket'],
     reconnection: true
@@ -85,20 +128,33 @@ onMounted(async () => {
 
   socket.on('connect', () => {
     wsConnected.value = true
-    console.log('ServiceDashboard: Socket.IO connected to websocket_server')
+    socketId.value = socket.id
+    console.log('ServiceDashboard: Socket.IO connected', socket.id)
   })
 
-  socket.on('disconnect', () => {
+  socket.on('connect_error', (err) => {
+    console.error('ServiceDashboard: Socket.IO connect error', err.message)
+  })
+
+  socket.on('disconnect', (reason) => {
     wsConnected.value = false
+    socketId.value = ''
+    console.warn('ServiceDashboard: Socket.IO disconnected', reason)
   })
 
   socket.on('report_update', (data) => {
-    // Update existing report or prepend new one
-    const idx = reports.value.findIndex(r => r.id === data.report_id || r.id === data.id)
+    logEvent(data)
+    const reportId = data.id || data.report_id
+    const idx = reports.value.findIndex(r => r.id === reportId)
     if (idx >= 0) {
-      reports.value[idx] = { ...reports.value[idx], ...data }
+      reports.value[idx] = { ...reports.value[idx], ...data, _flash: false }
+      flashRow(reportId)
     } else {
-      reports.value.unshift(data)
+      reports.value.unshift({ ...data, id: reportId, _flash: true })
+      setTimeout(() => {
+        const i = reports.value.findIndex(r => r.id === reportId)
+        if (i >= 0) reports.value[i] = { ...reports.value[i], _flash: false }
+      }, 1500)
     }
   })
 })
@@ -112,26 +168,99 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.view-container { max-width: 1000px; margin: 0 auto; }
-.header-row { display: flex; align-items: center; gap: 16px; margin-bottom: 8px; }
-h1 { color: #1a1a2e; }
-.ws-status { padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
-.ws-status.connected { background: #d4edda; color: #155724; }
-.ws-status.disconnected { background: #f8d7da; color: #721c24; }
-.subtitle { color: #666; margin-bottom: 24px; font-size: 0.95rem; }
-.table-container { background: white; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); overflow: hidden; }
+.view-container { max-width: 1000px; margin: 0 auto; padding-bottom: 48px; }
+
+/* ── HEADER ROW ──────────────────────────────────────────── */
+.header-row {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 4px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--c-border);
+  margin-bottom: 20px;
+}
+h1 { font-size: 26px; font-weight: 800; color: var(--c-dark); letter-spacing: -0.4px; }
+
+.ws-status {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border-radius: 9999px;
+  font-size: 12px; font-weight: 700; margin-left: auto;
+}
+.ws-status-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+}
+.ws-status.connected    { background: var(--c-success-bg); color: var(--c-success); }
+.ws-status.disconnected { background: var(--c-error-bg);   color: var(--c-error); }
+.ws-status.connected .ws-status-dot { background: var(--c-success); animation: pulse 1.5s ease-in-out infinite; }
+.ws-status.disconnected .ws-status-dot { background: var(--c-error); }
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.35;} }
+
+.subtitle { color: var(--c-muted); margin-bottom: 20px; font-size: 14px; }
+
+/* ── DIAG PANEL ──────────────────────────────────────────── */
+.diag-panel {
+  background: #f8faff;
+  border: 1px solid #e0e7ff;
+  border-left: 3px solid #818cf8;
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  font-size: 13px;
+}
+.diag-row { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 5px; }
+.diag-row:last-child { margin-bottom: 0; }
+.diag-label { color: var(--c-muted); width: 80px; flex-shrink: 0; font-weight: 600; font-size: 12px; padding-top: 1px; }
+.diag-val { color: var(--c-dark); }
+.diag-val.ok      { color: var(--c-success); font-weight: 600; }
+.diag-val.err     { color: var(--c-error);   font-weight: 600; }
+.diag-val.pending { color: var(--c-warn); }
+.event-log-row { align-items: flex-start; }
+.event-log { margin:0; padding:0; list-style:none; font-family:'Courier New',monospace; font-size:11px; color:var(--c-dark); }
+.event-log li+li { margin-top: 2px; }
+
+/* ── TABLE ───────────────────────────────────────────────── */
+.table-container {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
 table { width: 100%; border-collapse: collapse; }
-th { background: #1a1a2e; color: white; padding: 12px 16px; text-align: left; font-size: 0.85rem; font-weight: 600; }
-td { padding: 12px 16px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+th {
+  background: var(--c-primary);
+  color: rgba(255,255,255,0.7);
+  padding: 11px 16px;
+  text-align: left;
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.7px;
+}
+th:first-child { color: #fff; }
+td { padding: 13px 16px; border-bottom: 1px solid var(--c-border); font-size: 14px; color: var(--c-dark); }
 tr:last-child td { border-bottom: none; }
-tr.sev-high { background: #fff5f5; }
-tr.sev-medium { background: #fffbf0; }
-.location-cell { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.mono { font-family: monospace; font-size: 0.85rem; }
-.severity-badge { padding: 2px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
-.severity-badge.sev-high { background: #fde8e8; color: #c53030; }
-.severity-badge.sev-medium { background: #fef3c7; color: #92400e; }
-.severity-badge.sev-low { background: #d1fae5; color: #065f46; }
-.empty-state { background: white; padding: 48px; text-align: center; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); color: #999; }
-.update-hint { margin-top: 12px; font-size: 0.8rem; color: #aaa; }
+tbody tr { transition: background 0.1s; }
+tbody tr:hover { background: #f8fafc; }
+tr.sev-high   td { border-left: 3px solid var(--c-error);   }
+tr.sev-medium td { border-left: 3px solid #f59e0b; }
+tr.sev-high   td:not(:first-child) { border-left: none; }
+tr.sev-medium td:not(:first-child) { border-left: none; }
+tr.flash { animation: flash-in 1.5s ease-out; }
+@keyframes flash-in { 0%{background:#bbf7d0;} 100%{background:transparent;} }
+
+.location-cell { max-width: 200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.mono { font-family:'Courier New',monospace; font-size:12px; color: var(--c-muted); }
+
+.severity-badge {
+  display: inline-block; padding: 3px 10px;
+  border-radius: 9999px; font-size: 11px; font-weight: 700;
+}
+.severity-badge.sev-high   { background: var(--c-error-bg);   color: var(--c-error); }
+.severity-badge.sev-medium { background: var(--c-warn-bg);    color: var(--c-warn); }
+.severity-badge.sev-low    { background: var(--c-success-bg); color: var(--c-success); }
+
+.empty-state {
+  background: var(--c-surface); border: 1px solid var(--c-border);
+  border-radius: var(--radius); padding: 64px; text-align: center;
+  box-shadow: var(--shadow); color: var(--c-muted); font-size: 14px;
+}
+.update-hint { margin-top: 14px; font-size: 12px; color: var(--c-muted); }
 </style>
