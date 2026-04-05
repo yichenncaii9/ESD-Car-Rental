@@ -62,6 +62,11 @@
           <label>Duration (hours)</label>
           <input v-model.number="hours" type="number" min="1" max="72" required :disabled="submitting" />
         </div>
+        <div v-if="estimatedPrice !== null" class="price-preview">
+          <span class="price-label">Estimated Total</span>
+          <span class="price-amount">SGD {{ estimatedPrice.toFixed(2) }}</span>
+        </div>
+        <p v-else-if="priceLoading" class="price-loading">Calculating price…</p>
         <p v-if="bookingError" class="error-msg">{{ bookingError }}</p>
         <p v-if="bookingSuccess" class="success-msg">{{ bookingSuccess }}</p>
         <button type="submit" class="btn-primary" :disabled="submitting">
@@ -144,6 +149,24 @@ const loading = ref(false)
 const vehicleLoadError = ref('')
 const pickupDatetime = ref('')
 const hours = ref(2)
+const estimatedPrice = ref(null)
+const priceLoading   = ref(false)
+
+async function fetchPrice() {
+  if (!selectedVehicle.value || !hours.value) { estimatedPrice.value = null; return }
+  priceLoading.value = true
+  try {
+    const res = await api.get('/api/pricing/calculate', {
+      params: { vehicle_type: selectedVehicle.value.vehicle_type, hours: hours.value }
+    })
+    estimatedPrice.value = res.data.total ?? res.data.total_price ?? null
+  } catch {
+    estimatedPrice.value = null
+  } finally {
+    priceLoading.value = false
+  }
+}
+
 const submitting = ref(false)
 const bookingError = ref('')
 const bookingSuccess = ref('')
@@ -226,6 +249,7 @@ function selectVehicle(vehicle) {
   selectedVehicle.value = vehicle
   bookingError.value = ''
   bookingSuccess.value = ''
+  fetchPrice()
 
   const group = locationGroups.value.find((entry) =>
     entry.vehicles.some((candidate) => candidate.id === vehicle.id)
@@ -535,6 +559,10 @@ watch(selectedVehicle, () => {
     openLocationPopup(activeGroup)
   }
 })
+
+watch([selectedVehicle, hours], () => {
+  fetchPrice()
+}, { immediate: false })
 
 async function checkExistingBooking() {
   const uid = authStore.currentUser?.uid
@@ -865,4 +893,18 @@ async function submitBooking() {
   font-size: 0.75rem;
   color: #6b7280;
 }
+
+.price-preview {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--c-success-bg, #f0fdf4);
+  border: 1px solid #86efac;
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+.price-label { font-size: 13px; font-weight: 600; color: var(--c-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.price-amount { font-size: 20px; font-weight: 800; color: var(--c-dark); }
+.price-loading { font-size: 13px; color: var(--c-muted); margin-bottom: 16px; }
 </style>
