@@ -3,7 +3,7 @@
 Unit tests for report_issue composite — image_base64 passthrough.
 All downstream HTTP calls (booking, maps, openai, report_service) are mocked.
 """
-import sys, os, json, unittest
+import sys, os, unittest
 from unittest.mock import patch, MagicMock
 
 # Patch firebase_admin before importing app
@@ -92,7 +92,8 @@ class TestReportIssueImagePassthrough(unittest.TestCase):
                 "description": "Flat tyre",
             })
         self.assertEqual(res.status_code, 200)
-        self.assertNotIn("image_base64", captured.get("payload", {}))
+        self.assertIn("payload", captured, "openai_wrapper was not called")
+        self.assertNotIn("image_base64", captured["payload"])
 
     def test_response_contains_severity(self):
         mock_req = _mock_requests(openai_severity="high")
