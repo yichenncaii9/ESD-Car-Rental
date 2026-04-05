@@ -41,6 +41,9 @@
             <th>Location</th>
             <th>Severity</th>
             <th>Status</th>
+            <th>Diagnosis</th>
+            <th>Recommended Action</th>
+            <th>Safe to Drive</th>
           </tr>
         </thead>
         <tbody>
@@ -58,6 +61,16 @@
               </span>
             </td>
             <td>{{ report.status || '—' }}</td>
+            <td>{{ report.diagnosis || '—' }}</td>
+            <td class="action-cell">{{ report.recommended_action || '—' }}</td>
+            <td>
+              <span v-if="report.safe_to_drive !== undefined && report.safe_to_drive !== null"
+                    class="safe-badge"
+                    :class="report.safe_to_drive ? 'safe-yes' : 'safe-no'">
+                {{ report.safe_to_drive ? 'Yes' : 'No' }}
+              </span>
+              <span v-else>—</span>
+            </td>
           </tr>
         </tbody>
       </table>
@@ -168,7 +181,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.view-container { max-width: 1000px; margin: 0 auto; padding-bottom: 48px; }
+.view-container { max-width: 1300px; margin: 0 auto; padding-bottom: 48px; }
 
 /* ── HEADER ROW ──────────────────────────────────────────── */
 .header-row {
@@ -263,4 +276,9 @@ tr.flash { animation: flash-in 1.5s ease-out; }
   box-shadow: var(--shadow); color: var(--c-muted); font-size: 14px;
 }
 .update-hint { margin-top: 14px; font-size: 12px; color: var(--c-muted); }
+
+.action-cell { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.safe-badge { display: inline-block; padding: 3px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; }
+.safe-badge.safe-yes { background: var(--c-success-bg); color: var(--c-success); }
+.safe-badge.safe-no { background: var(--c-error-bg); color: var(--c-error); }
 </style>
