@@ -1,15 +1,45 @@
 ﻿<template>
-  <div class="view-container">
-    <h1>Book a Car</h1>
+  <div class="bookcar-page">
 
+    <!-- ── PAGE HEADER ──────────────────────────────────────── -->
+    <div class="bookcar-header">
+      <div class="bookcar-header__inner view-container">
+        <div>
+          <h1>Book a Car</h1>
+          <p class="bookcar-header__sub">Click a map marker to browse vehicles at that location, then confirm your booking below.</p>
+        </div>
+        <div class="bookcar-header__stats" aria-hidden="true">
+          <div class="header-stat">
+            <span class="header-stat-val">{{ availableVehicles.length }}</span>
+            <span class="header-stat-label">Available</span>
+          </div>
+          <div class="header-stat-divider"></div>
+          <div class="header-stat">
+            <span class="header-stat-val">3</span>
+            <span class="header-stat-label">Locations</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <div class="view-container bookcar-body">
     <div class="map-section">
-      <p class="map-hint">Click a marker to choose from vehicles at the same location</p>
+      <p class="map-hint" style="display:none">Click a marker to choose from vehicles at the same location</p>
       <GMapMap
         ref="mapRef"
         :center="mapCenter"
         :zoom="12"
         style="width: 100%; height: 480px; border-radius: 8px;"
       />
+    </div>
+
+    <!-- Existing booking banner -->
+    <div v-if="!bookingCheckLoading && existingBooking" class="existing-booking-banner">
+      <div class="existing-booking-banner__body">
+        <strong>You already have an active booking</strong>
+        <span>Booking <code>{{ existingBooking.id }}</code> is still active or upcoming. Cancel it before making a new one.</span>
+      </div>
+      <router-link to="/cancel-booking" class="btn-primary existing-booking-banner__cta">Cancel Booking</router-link>
     </div>
 
     <div class="booking-panel">
@@ -23,7 +53,7 @@
         <p>No vehicle selected. Click a marker on the map.</p>
       </div>
 
-      <form v-if="selectedVehicle" @submit.prevent="submitBooking" class="booking-form">
+      <form v-if="selectedVehicle" @submit.prevent="submitBooking" class="booking-form" :inert="!!existingBooking">
         <div class="form-group">
           <label>Pickup Date & Time</label>
           <input v-model="pickupDatetime" type="datetime-local" required :disabled="submitting" />
@@ -63,6 +93,7 @@
       </div>
     </div>
   </div>
+  </div>
 </template>
 
 <script setup>
@@ -72,6 +103,33 @@ import api from '../axios'
 import { useAuthStore } from '../stores/auth'
 
 const authStore = useAuthStore()
+
+// Existing booking guard — true if user already has a confirmed booking not yet expired
+const existingBooking    = ref(null)
+const bookingCheckLoading = ref(true)
+
+// Returns true if the booking is confirmed AND its end time (pickup + hours) is in the future.
+// Covers both currently-active and upcoming bookings.
+function isBookingActiveOrUpcoming(booking) {
+  if (!booking || booking.status !== 'confirmed') return false
+  const end = new Date(booking.pickup_datetime).getTime() + (booking.hours || 0) * 3600 * 1000
+  return Date.now() < end
+}
+
+const envBookingBaseUrl = (import.meta.env.VITE_BOOKING_SERVICE_URL || '').trim()
+const directBookingBaseUrl = (() => {
+  if (!envBookingBaseUrl) return 'http://localhost:5002'
+  try {
+    const host = new URL(envBookingBaseUrl).hostname
+    if (host === 'localhost' || host === '127.0.0.1' || !host.includes('_')) return envBookingBaseUrl
+  } catch {}
+  return 'http://localhost:5002'
+})()
+const bookingApi = axios.create({ baseURL: directBookingBaseUrl })
+const fallbackBookingBaseUrls = [directBookingBaseUrl, 'http://localhost:5002', 'http://127.0.0.1:5002']
+  .filter((url, i, arr) => url && arr.indexOf(url) === i)
+
+let bookingValidityTimer = null
 
 const mapRef = ref(null)
 const mapObject = ref(null)
@@ -478,7 +536,38 @@ watch(selectedVehicle, () => {
   }
 })
 
+async function checkExistingBooking() {
+  const uid = authStore.currentUser?.uid
+  if (!uid) { bookingCheckLoading.value = false; return }
+  try {
+    let res
+    for (const baseURL of fallbackBookingBaseUrls) {
+      try {
+        res = await bookingApi.get(`/api/bookings/user/${uid}/active`, { baseURL })
+        break
+      } catch (err) {
+        if (err?.response?.status === 404) break
+      }
+    }
+    const booking = res?.data?.data ?? res?.data
+    existingBooking.value = (booking && isBookingActiveOrUpcoming(booking)) ? booking : null
+  } catch {
+    existingBooking.value = null
+  } finally {
+    bookingCheckLoading.value = false
+  }
+}
+
 onMounted(async () => {
+  await checkExistingBooking()
+
+  // Reactively unlock the form once the existing booking expires
+  bookingValidityTimer = setInterval(() => {
+    if (existingBooking.value && !isBookingActiveOrUpcoming(existingBooking.value)) {
+      existingBooking.value = null
+    }
+  }, 10000)
+
   mapObject.value = await mapRef.value?.$mapPromise
 
   if (mapObject.value && window.google?.maps) {
@@ -492,6 +581,7 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  clearInterval(bookingValidityTimer)
   clearMarkerOverlays()
   closeLocationPopup()
   if (mapClickListener.value && window.google?.maps?.event) {
@@ -501,6 +591,11 @@ onUnmounted(() => {
 
 async function submitBooking() {
   if (!selectedVehicle.value) return
+  // Re-check at submit time in case the existing booking was not yet cleared
+  if (existingBooking.value && isBookingActiveOrUpcoming(existingBooking.value)) {
+    bookingError.value = 'You already have an active or upcoming booking. Cancel it first.'
+    return
+  }
 
   submitting.value = true
   bookingError.value = ''
@@ -529,39 +624,150 @@ async function submitBooking() {
 </script>
 
 <style scoped>
-.view-container { max-width: 960px; margin: 0 auto; }
-h1 { margin-bottom: 20px; color: #1a1a2e; }
+.bookcar-page { min-height: 100vh; }
+
+/* ── PAGE HEADER ─────────────────────────────────────────── */
+.bookcar-header {
+  background: var(--c-dark);
+  padding: 28px 24px 32px;
+  margin-bottom: 0;
+}
+.bookcar-header__inner {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.bookcar-header h1 {
+  font-size: 24px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.4px;
+  margin-bottom: 4px;
+}
+.bookcar-header__sub { font-size: 13px; color: #64748b; }
+.bookcar-header__stats { display: flex; align-items: center; gap: 20px; }
+.header-stat { text-align: center; }
+.header-stat-val { display: block; font-size: 22px; font-weight: 800; color: #fff; line-height: 1; }
+.header-stat-label { font-size: 11px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+.header-stat-divider { width: 1px; height: 32px; background: rgba(255,255,255,0.08); }
+
+.bookcar-body { padding-top: 28px; padding-bottom: 48px; max-width: 960px; }
+
+.existing-booking-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-left: 3px solid #f59e0b;
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+}
+.existing-booking-banner__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  color: #92400e;
+}
+.existing-booking-banner__body strong { font-weight: 700; }
+.existing-booking-banner__body code {
+  font-family: monospace;
+  background: rgba(0,0,0,0.06);
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+.existing-booking-banner__cta { width: auto; padding: 9px 20px; font-size: 13px; flex-shrink: 0; }
+
+/* Map */
 .map-section { margin-bottom: 24px; }
-.map-hint { margin-bottom: 8px; color: #666; font-size: 0.9rem; }
-.booking-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px; }
-.selected-vehicle, .no-selection { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
-.selected-vehicle h3 { margin-bottom: 12px; color: #1a1a2e; }
-.no-selection { color: #999; display: flex; align-items: center; justify-content: center; }
-.booking-form { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
-.form-group { margin-bottom: 16px; }
-.form-group label { display: block; margin-bottom: 6px; color: #555; font-size: 0.9rem; }
-.form-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem; }
-.error-msg { color: #e94560; font-size: 0.875rem; margin-bottom: 12px; }
-.success-msg { color: #2ecc71; font-size: 0.875rem; margin-bottom: 12px; }
-.btn-primary { width: 100%; padding: 12px; background: #1a1a2e; color: white; border: none; border-radius: 4px; cursor: pointer; }
-.btn-primary:disabled { background: #999; cursor: not-allowed; }
-.vehicle-list { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
-.vehicle-list h3 { margin-bottom: 16px; }
-.count { font-weight: normal; color: #888; font-size: 0.9rem; }
+
+/* Booking panel */
+.booking-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+
+.selected-vehicle,
+.no-selection {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+.selected-vehicle h3 {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.7px; color: var(--c-muted); margin-bottom: 14px;
+  display: flex; align-items: center; gap: 6px;
+}
+.selected-vehicle h3::before {
+  content: ''; display: inline-block; width: 3px; height: 14px;
+  background: var(--c-accent); border-radius: 2px;
+}
+.selected-vehicle p { font-size: 14px; color: var(--c-dark); margin-bottom: 8px; }
+.selected-vehicle strong { font-weight: 700; color: var(--c-primary); }
+.no-selection {
+  color: var(--c-muted); display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 8px;
+  font-size: 14px; text-align: center; min-height: 120px;
+  border-style: dashed;
+}
+
+.booking-form {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+}
+.btn-primary { width: 100%; padding: 13px; justify-content: center; font-size: 15px; }
+
+/* Vehicle list */
+.vehicle-list {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  padding: 20px 20px 24px;
+  box-shadow: var(--shadow);
+}
+.vehicle-list h3 {
+  font-size: 15px; font-weight: 700; color: var(--c-dark);
+  margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+}
+.count {
+  background: var(--c-accent); color: #fff;
+  font-size: 11px; font-weight: 700;
+  padding: 2px 8px; border-radius: 9999px;
+}
 .vehicle-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
-.vehicle-card { border: 2px solid #eee; border-radius: 8px; padding: 14px; cursor: pointer; transition: all 0.15s; }
-.vehicle-card:hover:not(.unavailable) { border-color: #1a1a2e; background: #f5f7ff; }
-.vehicle-card.selected { border-color: #1a1a2e; background: #e8f0fe; }
-.vehicle-card.unavailable { opacity: 0.5; cursor: not-allowed; }
-.vehicle-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-.vehicle-type { font-size: 0.75rem; text-transform: uppercase; font-weight: 600; color: #555; letter-spacing: 0.05em; }
-.vehicle-status { font-size: 0.7rem; padding: 2px 7px; border-radius: 12px; font-weight: 600; }
-.vehicle-status.available { background: #d4edda; color: #155724; }
-.vehicle-status.rented { background: #f8d7da; color: #721c24; }
-.vehicle-status.maintenance { background: #fff3cd; color: #856404; }
-.vehicle-plate { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
-.vehicle-meta { font-size: 0.8rem; color: #888; }
-.empty-state { color: #999; text-align: center; padding: 24px; }
+
+.vehicle-card {
+  border: 1.5px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+  background: var(--c-surface);
+}
+.vehicle-card:hover { border-color: var(--c-accent); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+.vehicle-card.selected {
+  border-color: var(--c-accent);
+  background: linear-gradient(135deg, #fff5f5 0%, #fff 100%);
+  box-shadow: 0 0 0 3px rgba(220,38,38,0.12);
+}
+.vehicle-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.vehicle-type { font-size: 10px; text-transform: uppercase; font-weight: 800; color: var(--c-muted); letter-spacing: 0.8px; }
+.vehicle-status { font-size: 10px; padding: 2px 8px; border-radius: 9999px; font-weight: 700; }
+.vehicle-status.available   { background: var(--c-success-bg); color: var(--c-success); }
+.vehicle-status.rented      { background: var(--c-error-bg);   color: var(--c-error); }
+.vehicle-status.maintenance { background: var(--c-warn-bg);    color: var(--c-warn); }
+.vehicle-plate { font-size: 17px; font-weight: 800; color: var(--c-dark); margin-bottom: 4px; letter-spacing: 0.5px; }
+.vehicle-meta  { font-size: 12px; color: var(--c-muted); }
+
+.empty-state { color: var(--c-muted); text-align: center; padding: 40px; font-size: 14px; }
 
 :deep(.car-map-marker) {
   position: absolute;
