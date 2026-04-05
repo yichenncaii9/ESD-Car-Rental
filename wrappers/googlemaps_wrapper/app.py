@@ -100,11 +100,10 @@ def geocode():
             "provider": "googlemaps",
         }), 200
     except Exception as e:
-        print(f"[googlemaps_wrapper] Google Maps API failed, using SG landmark fallback: {e}")
-        fallback_address = _nearest_sg_landmark(lat, lng)
+        print(f"[googlemaps_wrapper] Google Maps API failed, falling back to raw coordinates: {e}")
         return jsonify({
             "status": "ok",
-            "address": fallback_address,
+            "address": f"{float(lat):.6f}, {float(lng):.6f}",
             "provider": "fallback",
         }), 200
 

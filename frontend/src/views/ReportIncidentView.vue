@@ -150,13 +150,13 @@ const router = useRouter()
 const activeBooking  = ref(null)
 const bookingLoading = ref(true)
 
-// Returns true only if now falls within [pickup, pickup + hours]
+// Returns true if booking is confirmed and the rental period has not yet ended
 function isBookingCurrentlyActive(booking) {
   if (!booking || booking.status !== 'confirmed') return false
   const now    = Date.now()
   const pickup = new Date(booking.pickup_datetime).getTime()
   const end    = pickup + (booking.hours || 0) * 3600 * 1000
-  return now >= pickup && now <= end
+  return now <= end
 }
 
 // Default to central Singapore; overridden by geolocation on mount
@@ -325,12 +325,12 @@ onMounted(async () => {
     bookingLoading.value = false
   }
 
-  // Reactively expire the booking when its time window ends (check every 5 seconds)
+  // Reactively expire the booking when its rental period ends (check every 30 seconds)
   validityTimer = setInterval(() => {
     if (activeBooking.value && !isBookingCurrentlyActive(activeBooking.value)) {
       clearActiveBooking()
     }
-  }, 5000)
+  }, 30000)
 })
 
 function onPlaceChanged(place) {

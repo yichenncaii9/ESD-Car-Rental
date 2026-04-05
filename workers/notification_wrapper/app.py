@@ -55,14 +55,16 @@ def callback(ch, method, properties, body):
         safe_to_drive      = data.get("safe_to_drive", False)
 
         # Send SMS to all recipients
-        safe_label = "Yes" if safe_to_drive else "No"
+        # SMU API enforces a 160-char limit — keep message compact
+        safe_label = "Y" if safe_to_drive else "N"
+        short_loc   = str(location or "")[:25]
+        short_diag  = str(diagnosis or "unknown")[:30]
         msg = (
-            f"[ESD Rental] New incident reported. "
-            f"Report: {report_id} | Vehicle: {vehicle_id} | "
-            f"Severity: {severity} | Location: {location} | "
-            f"Diagnosis: {diagnosis} | Action: {recommended_action} | "
-            f"Safe to drive: {safe_label}"
+            f"[ESD] {(severity or '?').upper()} | Veh:{vehicle_id} | "
+            f"{short_diag} | Safe:{safe_label} | "
+            f"Loc:{short_loc} | ID:{str(report_id)[:8]}"
         )
+        msg = msg[:160]  # hard cap as safety net
         for number in RECIPIENTS:
             sid, provider = send_sms(number, msg)
             print(f"[notification_wrapper] Service team SMS sent: {sid} ({provider})")

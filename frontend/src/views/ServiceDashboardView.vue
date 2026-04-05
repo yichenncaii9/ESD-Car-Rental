@@ -62,8 +62,8 @@
             </td>
             <td>{{ report.status || '—' }}</td>
             <td class="expandable-cell">
-              <template v-if="report.diagnosis && report.diagnosis.length > 60">
-                <span>{{ expandedDiagnosis.has(report.id) ? report.diagnosis : report.diagnosis.slice(0, 60) + '…' }}</span>
+              <template v-if="report.diagnosis && report.diagnosis.length > 30">
+                <span>{{ expandedDiagnosis.has(report.id) ? report.diagnosis : report.diagnosis.slice(0, 30) + '…' }}</span>
                 <button class="expand-btn" @click="toggleDiagnosis(report.id)">
                   {{ expandedDiagnosis.has(report.id) ? 'Less' : 'More' }}
                 </button>
@@ -71,8 +71,8 @@
               <template v-else>{{ report.diagnosis || '—' }}</template>
             </td>
             <td class="expandable-cell">
-              <template v-if="report.recommended_action && report.recommended_action.length > 60">
-                <span>{{ expandedAction.has(report.id) ? report.recommended_action : report.recommended_action.slice(0, 60) + '…' }}</span>
+              <template v-if="report.recommended_action && report.recommended_action.length > 30">
+                <span>{{ expandedAction.has(report.id) ? report.recommended_action : report.recommended_action.slice(0, 30) + '…' }}</span>
                 <button class="expand-btn" @click="toggleAction(report.id)">
                   {{ expandedAction.has(report.id) ? 'Less' : 'More' }}
                 </button>
