@@ -53,7 +53,7 @@
         <p>No vehicle selected. Click a marker on the map.</p>
       </div>
 
-      <form v-if="selectedVehicle" @submit.prevent="submitBooking" class="booking-form" :inert="!!existingBooking">
+      <form v-if="selectedVehicle" class="booking-form" :inert="!!existingBooking">
         <div class="form-group">
           <label>Pickup Date & Time</label>
           <input v-model="pickupDatetime" type="datetime-local" required :disabled="submitting" />
@@ -69,8 +69,8 @@
         <p v-else-if="priceLoading" class="price-loading">Calculating price…</p>
         <p v-if="bookingError" class="error-msg">{{ bookingError }}</p>
         <p v-if="bookingSuccess" class="success-msg">{{ bookingSuccess }}</p>
-        <button type="submit" class="btn-primary" :disabled="submitting">
-          {{ submitting ? 'Booking...' : 'Confirm Booking' }}
+        <button type="button" class="btn-primary" :disabled="submitting || !estimatedPrice" @click="openPaymentModal">
+          {{ submitting ? 'Booking...' : `Pay SGD ${estimatedPrice ? estimatedPrice.toFixed(2) : '—'} & Book` }}
         </button>
       </form>
     </div>
@@ -99,13 +99,54 @@
     </div>
   </div>
   </div>
+
+  <!-- Stripe payment modal -->
+  <div v-if="paymentModalOpen" class="payment-overlay" @click.self="closePaymentModal">
+    <div class="payment-modal">
+      <div class="payment-modal__header">
+        <span class="payment-modal__title">Complete Payment</span>
+        <button type="button" class="payment-modal__close" @click="closePaymentModal">×</button>
+      </div>
+
+      <div class="payment-modal__summary">
+        <span>{{ selectedVehicle?.vehicle_type }} · {{ selectedVehicle?.plate_number }}</span>
+        <span class="payment-modal__amount">SGD {{ estimatedPrice?.toFixed(2) }}</span>
+      </div>
+
+      <div class="payment-modal__body">
+        <label class="payment-modal__label">Card Details</label>
+        <div id="stripe-card-element" class="stripe-card-box"></div>
+        <p v-if="cardError" class="error-msg" style="margin-top:8px">{{ cardError }}</p>
+        <p class="stripe-test-hint">Test card: <code>4242 4242 4242 4242</code> · any future expiry · any CVC</p>
+      </div>
+
+      <div class="payment-modal__footer">
+        <button type="button" class="btn-primary payment-confirm-btn"
+          :disabled="submitting || !!cardError"
+          @click="submitBooking">
+          {{ submitting ? 'Processing…' : `Pay SGD ${estimatedPrice?.toFixed(2)}` }}
+        </button>
+        <button type="button" class="payment-cancel-btn" :disabled="submitting" @click="closePaymentModal">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
 import axios from 'axios'
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import api from '../axios'
 import { useAuthStore } from '../stores/auth'
+import { loadStripe } from '@stripe/stripe-js'
+
+const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || ''
+const paymentModalOpen = ref(false)
+const stripeInstance   = ref(null)
+const cardElement      = ref(null)
+const cardError        = ref('')
+const cardMounted      = ref(false)
 
 const authStore = useAuthStore()
 
@@ -165,6 +206,47 @@ async function fetchPrice() {
   } finally {
     priceLoading.value = false
   }
+}
+
+async function openPaymentModal() {
+  if (!selectedVehicle.value || !pickupDatetime.value || !hours.value) {
+    bookingError.value = 'Please select a vehicle, pickup time, and duration first.'
+    return
+  }
+  if (existingBooking.value && isBookingActiveOrUpcoming(existingBooking.value)) {
+    bookingError.value = 'You already have an active or upcoming booking. Cancel it first.'
+    return
+  }
+  bookingError.value = ''
+  paymentModalOpen.value = true
+  await nextTick()
+  await mountCardElement()
+}
+
+async function mountCardElement() {
+  if (cardMounted.value) return
+  if (!stripeInstance.value) {
+    stripeInstance.value = await loadStripe(stripePublishableKey)
+  }
+  const elements = stripeInstance.value.elements()
+  cardElement.value = elements.create('card', {
+    style: {
+      base: { fontSize: '15px', color: '#1a1a2e', fontFamily: 'inherit', '::placeholder': { color: '#94a3b8' } },
+      invalid: { color: '#ef4444' },
+    },
+  })
+  cardElement.value.mount('#stripe-card-element')
+  cardElement.value.on('change', (event) => {
+    cardError.value = event.error ? event.error.message : ''
+  })
+  cardMounted.value = true
+}
+
+function closePaymentModal() {
+  paymentModalOpen.value = false
+  if (cardElement.value) { cardElement.value.unmount(); cardElement.value = null }
+  cardMounted.value = false
+  cardError.value = ''
 }
 
 const submitting = ref(false)
@@ -619,27 +701,47 @@ onUnmounted(() => {
 
 async function submitBooking() {
   if (!selectedVehicle.value) return
-  // Re-check at submit time in case the existing booking was not yet cleared
   if (existingBooking.value && isBookingActiveOrUpcoming(existingBooking.value)) {
     bookingError.value = 'You already have an active or upcoming booking. Cancel it first.'
+    return
+  }
+  if (!stripeInstance.value || !cardElement.value) {
+    bookingError.value = 'Payment form not ready. Please try again.'
     return
   }
 
   submitting.value = true
   bookingError.value = ''
   bookingSuccess.value = ''
+
   try {
+    // Step A: Tokenize card via Stripe.js
+    const { paymentMethod, error } = await stripeInstance.value.createPaymentMethod({
+      type: 'card',
+      card: cardElement.value,
+    })
+    if (error) {
+      bookingError.value = error.message
+      return
+    }
+
+    // Step B: Submit booking with the payment_method ID
     const uid = authStore.currentUser?.uid
     const res = await api.post('/api/book-car', {
-      user_uid: uid,
-      vehicle_id: selectedVehicle.value.id,
-      vehicle_type: selectedVehicle.value.vehicle_type,
-      pickup_datetime: pickupDatetime.value,
-      hours: hours.value
+      user_uid:         uid,
+      vehicle_id:       selectedVehicle.value.id,
+      vehicle_type:     selectedVehicle.value.vehicle_type,
+      pickup_datetime:  pickupDatetime.value,
+      hours:            hours.value,
+      payment_method:   paymentMethod.id,
     })
+
     bookingSuccess.value = `Booking confirmed! ID: ${res.data.booking_id || res.data.id}`
+    closePaymentModal()
     selectedVehicle.value = null
+    estimatedPrice.value = null
     await loadVehicles()
+    await checkExistingBooking()
   } catch (err) {
     bookingError.value =
       err.response?.data?.error ||
@@ -907,4 +1009,69 @@ async function submitBooking() {
 .price-label { font-size: 13px; font-weight: 600; color: var(--c-muted); text-transform: uppercase; letter-spacing: 0.5px; }
 .price-amount { font-size: 20px; font-weight: 800; color: var(--c-dark); }
 .price-loading { font-size: 13px; color: var(--c-muted); margin-bottom: 16px; }
+
+/* Payment modal */
+.payment-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+}
+.payment-modal {
+  background: #fff;
+  border-radius: var(--radius);
+  width: 100%; max-width: 440px;
+  margin: 16px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.22);
+  overflow: hidden;
+}
+.payment-modal__header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 24px 0;
+}
+.payment-modal__title { font-size: 16px; font-weight: 800; color: var(--c-dark); }
+.payment-modal__close {
+  width: 28px; height: 28px; border: none; border-radius: 50%;
+  background: var(--c-bg); cursor: pointer; font-size: 18px;
+  color: var(--c-muted); display: flex; align-items: center; justify-content: center;
+}
+.payment-modal__summary {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 24px;
+  background: var(--c-bg);
+  margin: 16px 24px;
+  border-radius: var(--radius-sm);
+  font-size: 14px; color: var(--c-dark);
+}
+.payment-modal__amount { font-weight: 800; font-size: 18px; }
+.payment-modal__body { padding: 0 24px 8px; }
+.payment-modal__label { font-size: 12px; font-weight: 600; color: var(--c-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px; }
+.stripe-card-box {
+  border: 1.5px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  background: var(--c-bg);
+  transition: border-color 0.15s;
+}
+.stripe-card-box:focus-within { border-color: var(--c-accent); }
+.stripe-test-hint {
+  font-size: 12px; color: var(--c-muted);
+  margin-top: 10px; line-height: 1.5;
+}
+.stripe-test-hint code {
+  font-family: monospace; background: var(--c-bg);
+  padding: 1px 5px; border-radius: 3px;
+}
+.payment-modal__footer {
+  display: flex; gap: 10px; padding: 16px 24px 24px;
+}
+.payment-confirm-btn { flex: 1; width: auto; font-size: 15px; padding: 13px; }
+.payment-cancel-btn {
+  padding: 13px 20px; border: 1.5px solid var(--c-border);
+  border-radius: var(--radius-sm); font-size: 14px; font-weight: 600;
+  color: var(--c-muted); background: transparent; cursor: pointer;
+  transition: border-color 0.15s;
+}
+.payment-cancel-btn:hover:not(:disabled) { border-color: var(--c-dark); color: var(--c-dark); }
+.payment-cancel-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 </style>
