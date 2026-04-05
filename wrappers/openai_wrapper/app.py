@@ -32,9 +32,10 @@ def evaluate():
     Mock fallback: if OpenAI fails, returns severity="medium".
 
     Request body:
-      { description: str, address: str, image_base64?: str }
-      image_base64 is a base64-encoded JPEG/PNG (no data-URI prefix needed;
+      { description: str, address: str, image_base64?: str, image_mime_type?: str }
+      image_base64 is a base64-encoded image (no data-URI prefix needed;
       the wrapper adds the prefix automatically).
+      image_mime_type defaults to "image/jpeg" if omitted (e.g. use "image/png" for PNG).
 
     Response:
       { status: "ok", severity: "low"|"medium"|"high", provider: "openai"|"fallback" }
@@ -43,6 +44,7 @@ def evaluate():
     description = body.get("description", "")
     address = body.get("address", "Unknown location")
     image_base64 = body.get("image_base64")  # optional
+    image_mime_type = body.get("image_mime_type", "image/jpeg")
 
     try:
         client = OpenAI(api_key=OPENAI_API_KEY)
@@ -56,7 +58,7 @@ def evaluate():
                 {
                     "type": "image_url",
                     "image_url": {
-                        "url": f"data:image/jpeg;base64,{image_base64}",
+                        "url": f"data:{image_mime_type};base64,{image_base64}",
                         "detail": "low",   # low = 65 tokens, sufficient for damage assessment
                     },
                 },

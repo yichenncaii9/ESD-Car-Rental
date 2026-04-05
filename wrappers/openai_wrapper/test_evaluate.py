@@ -3,7 +3,7 @@
 Unit tests for openai_wrapper /api/openai/evaluate
 OpenAI client is mocked so tests run without an API key.
 """
-import sys, os, json, unittest
+import sys, os, unittest
 from unittest.mock import patch, MagicMock
 
 # Add wrapper root to path so we can import app directly
@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 import app as wrapper_app
 
 
-class TestEvaluateTextOnly(unittest.TestCase):
+class TestEvaluate(unittest.TestCase):
     def setUp(self):
         wrapper_app.app.config["TESTING"] = True
         self.client = wrapper_app.app.test_client()
@@ -63,6 +63,9 @@ class TestEvaluateTextOnly(unittest.TestCase):
         types = [part["type"] for part in user_content]
         self.assertIn("image_url", types)
         self.assertIn("text", types)
+        image_part = next(p for p in user_content if p["type"] == "image_url")
+        self.assertTrue(image_part["image_url"]["url"].startswith("data:image/"))
+        self.assertIn(";base64,", image_part["image_url"]["url"])
 
     def test_invalid_severity_defaults_to_medium(self):
         with patch("app.OpenAI", return_value=self._mock_openai("UNKNOWN_WORD")):
