@@ -72,7 +72,7 @@ services:
 
   # 1. book-car composite
   - name: book-car-service
-    url: http://composite_book_car:6001
+    url: http://composite-book-car:6001
     routes:
       - name: book-car-route
         paths:
@@ -110,7 +110,7 @@ services:
 
   # 2. cancel-booking composite
   - name: cancel-booking-service
-    url: http://composite_cancel_booking:6002
+    url: http://composite-cancel-booking:6002
     routes:
       - name: cancel-booking-route
         paths:
@@ -153,7 +153,7 @@ services:
 
   # 3. report-issue composite
   - name: report-issue-service
-    url: http://composite_report_issue:6003
+    url: http://composite-report-issue:6003
     routes:
       - name: report-issue-route
         paths:
@@ -196,7 +196,7 @@ services:
 
   # 4. resolve-issue composite
   - name: resolve-issue-service
-    url: http://composite_resolve_issue:6004
+    url: http://composite-resolve-issue:6004
     routes:
       - name: resolve-issue-route
         paths:
@@ -239,7 +239,7 @@ services:
 
   # 5. vehicle atomic service
   - name: vehicle-service
-    url: http://vehicle_service:5001
+    url: http://vehicle-service:5001
     routes:
       - name: vehicles-route
         preserve_host: true
@@ -278,7 +278,7 @@ services:
 
   # 6. booking atomic service
   - name: booking-service
-    url: http://booking_service:5002
+    url: http://booking-service:5002
     routes:
       - name: bookings-route
         preserve_host: true
@@ -322,7 +322,7 @@ services:
 
   # 7. driver atomic service
   - name: driver-service
-    url: http://driver_service:5003
+    url: http://driver-service:5003
     routes:
       - name: drivers-route
         paths:
@@ -365,7 +365,7 @@ services:
 
   # 8. report atomic service
   - name: report-service
-    url: http://report_service:5004
+    url: http://report-service:5004
     routes:
       - name: reports-route
         preserve_host: true

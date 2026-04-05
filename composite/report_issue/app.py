@@ -22,10 +22,10 @@ except Exception as e:
     db = None
 
 # Service host constants
-BOOKING_HOST = os.environ.get("BOOKING_SERVICE_HOST", "booking_service:5002")
-REPORT_HOST = os.environ.get("REPORT_SERVICE_HOST", "report_service:5004")
-MAPS_HOST = os.environ.get("MAPS_WRAPPER_HOST", "googlemaps_wrapper:6201")
-OPENAI_HOST = os.environ.get("OPENAI_WRAPPER_HOST", "openai_wrapper:6200")
+BOOKING_HOST = os.environ.get("BOOKING_SERVICE_HOST", "booking-service:5002")
+REPORT_HOST = os.environ.get("REPORT_SERVICE_HOST", "report-service:5004")
+MAPS_HOST = os.environ.get("MAPS_WRAPPER_HOST", "googlemaps-wrapper:6201")
+OPENAI_HOST = os.environ.get("OPENAI_WRAPPER_HOST", "openai-wrapper:6200")
 RABBITMQ_HOST = os.environ.get("RABBITMQ_HOST", "rabbitmq")
 RABBITMQ_PORT = int(os.environ.get("RABBITMQ_PORT", 5672))
 

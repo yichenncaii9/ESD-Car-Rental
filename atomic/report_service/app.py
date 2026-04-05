@@ -9,6 +9,7 @@ CORS(app)
 # Flask 3+ may reject upstream Host headers unless explicitly trusted.
 app.config["TRUSTED_HOSTS"] = [
     "localhost",
+    "localhost:8000",
     "127.0.0.1",
     "report_service",
     "report_service:5004",

@@ -9,10 +9,14 @@ CORS(app)
 # Be explicit so Flask/Werkzeug accepts browser and proxy requests.
 app.config["TRUSTED_HOSTS"] = [
     "localhost",
+    "localhost:8000",
     "127.0.0.1",
     "booking_service",
+    "booking_service:5002",
     "booking-service",
+    "booking-service:5002",
     "kong",
+    "kong:8000",
 ]
 
 # Firestore init — wrapped in try/except so container starts even without credentials

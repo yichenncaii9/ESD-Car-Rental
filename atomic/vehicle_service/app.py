@@ -9,6 +9,7 @@ CORS(app)
 # Include local and service-discovery hostnames used by Kong / Docker / K8s.
 app.config["TRUSTED_HOSTS"] = [
     "localhost",
+    "localhost:8000",
     "127.0.0.1",
     "vehicle_service",
     "vehicle_service:5001",

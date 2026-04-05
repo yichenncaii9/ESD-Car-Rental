@@ -48,7 +48,7 @@ services:
     networks:
       - rental-net
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:8001/"]
+      test: ["CMD", "kong", "health"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -71,9 +71,11 @@ services:
     volumes:
       - ./firebase-service-account.json:/secrets/firebase-service-account.json:ro
     networks:
-      - rental-net
+      rental-net:
+        aliases:
+          - vehicle-service
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5001/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5001/health', timeout=3)"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -92,9 +94,11 @@ services:
     volumes:
       - ./firebase-service-account.json:/secrets/firebase-service-account.json:ro
     networks:
-      - rental-net
+      rental-net:
+        aliases:
+          - booking-service
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5002/health', timeout=3)"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -113,9 +117,11 @@ services:
     volumes:
       - ./firebase-service-account.json:/secrets/firebase-service-account.json:ro
     networks:
-      - rental-net
+      rental-net:
+        aliases:
+          - driver-service
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5003/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5003/health', timeout=3)"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -134,9 +140,11 @@ services:
     volumes:
       - ./firebase-service-account.json:/secrets/firebase-service-account.json:ro
     networks:
-      - rental-net
+      rental-net:
+        aliases:
+          - report-service
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5004/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5004/health', timeout=3)"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -177,9 +185,11 @@ services:
     volumes:
       - ./firebase-service-account.json:/secrets/firebase-service-account.json:ro
     networks:
-      - rental-net
+      rental-net:
+        aliases:
+          - composite-book-car
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6001/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:6001/health', timeout=3)"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -199,9 +209,11 @@ services:
     volumes:
       - ./firebase-service-account.json:/secrets/firebase-service-account.json:ro
     networks:
-      - rental-net
+      rental-net:
+        aliases:
+          - composite-cancel-booking
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6002/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:6002/health', timeout=3)"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -222,9 +234,11 @@ services:
     volumes:
       - ./firebase-service-account.json:/secrets/firebase-service-account.json:ro
     networks:
-      - rental-net
+      rental-net:
+        aliases:
+          - composite-report-issue
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6003/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:6003/health', timeout=3)"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -244,9 +258,11 @@ services:
     volumes:
       - ./firebase-service-account.json:/secrets/firebase-service-account.json:ro
     networks:
-      - rental-net
+      rental-net:
+        aliases:
+          - composite-resolve-issue
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6004/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:6004/health', timeout=3)"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -266,9 +282,11 @@ services:
     environment:
       OPENAI_API_KEY: ${OPENAI_API_KEY}
     networks:
-      - rental-net
+      rental-net:
+        aliases:
+          - openai-wrapper
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6200/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:6200/health', timeout=3)"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -284,9 +302,11 @@ services:
     environment:
       GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
     networks:
-      - rental-net
+      rental-net:
+        aliases:
+          - googlemaps-wrapper
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6201/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:6201/health', timeout=3)"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -302,9 +322,11 @@ services:
     environment:
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
     networks:
-      - rental-net
+      rental-net:
+        aliases:
+          - stripe-wrapper
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6202/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:6202/health', timeout=3)"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -318,7 +340,9 @@ services:
     ports:
       - "6203:6203"
     networks:
-      - rental-net
+      rental-net:
+        aliases:
+          - notification-wrapper-http
     restart: unless-stopped
 
   # ─────────────────────────────────────────────
@@ -336,7 +360,7 @@ services:
         aliases:
           - websocket-server
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:6100/health"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:6100/health', timeout=3)"]
       interval: 15s
       timeout: 5s
       retries: 3

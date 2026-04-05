@@ -20,8 +20,8 @@ except Exception as e:
     db = None
 
 # Service host constants
-REPORT_HOST = os.environ.get("REPORT_SERVICE_HOST", "report_service:5004")
-NOTIFICATION_HOST = os.environ.get("NOTIFICATION_WRAPPER_HOST", "notification_wrapper_http:6203")
+REPORT_HOST = os.environ.get("REPORT_SERVICE_HOST", "report-service:5004")
+NOTIFICATION_HOST = os.environ.get("NOTIFICATION_WRAPPER_HOST", "notification-wrapper-http:6203")
 
 
 @app.route("/health")

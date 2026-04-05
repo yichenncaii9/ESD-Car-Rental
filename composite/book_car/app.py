@@ -19,11 +19,11 @@ except Exception as e:
     print(f"[WARN] Firestore init failed (Phase 1 stub): {e}")
     db = None
 
-DRIVER_HOST = os.environ.get("DRIVER_SERVICE_HOST", "driver_service:5003")
-VEHICLE_HOST = os.environ.get("VEHICLE_SERVICE_HOST", "vehicle_service:5001")
+DRIVER_HOST = os.environ.get("DRIVER_SERVICE_HOST", "driver-service:5003")
+VEHICLE_HOST = os.environ.get("VEHICLE_SERVICE_HOST", "vehicle-service:5001")
 PRICING_HOST = os.environ.get("PRICING_SERVICE_HOST", "pricing_service:5005")
-BOOKING_HOST = os.environ.get("BOOKING_SERVICE_HOST", "booking_service:5002")
-STRIPE_HOST = os.environ.get("STRIPE_WRAPPER_HOST", "stripe_wrapper:6202")
+BOOKING_HOST = os.environ.get("BOOKING_SERVICE_HOST", "booking-service:5002")
+STRIPE_HOST = os.environ.get("STRIPE_WRAPPER_HOST", "stripe-wrapper:6202")
 
 
 @app.route("/health")
