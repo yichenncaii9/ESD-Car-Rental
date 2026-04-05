@@ -1,69 +1,102 @@
 <template>
-  <div class="view-container">
-    <h1>My Driver Profile</h1>
-    <p class="subtitle">Your details are used to validate your license before each booking.</p>
+  <div class="profile-page">
 
-    <!-- Status badge -->
-    <div v-if="statusMsg" class="status-badge" :class="statusType">{{ statusMsg }}</div>
-
-    <!-- Personal Info Card -->
-    <div class="card">
-      <div class="card-header">
-        <h3>Personal Information</h3>
-      </div>
-      <div class="card-body">
-        <div class="form-grid">
-          <div class="form-group">
-            <label>Full Name</label>
-            <input v-model="form.name" type="text" placeholder="Your name" :disabled="saving" />
-          </div>
-          <div class="form-group">
-            <label>Email</label>
-            <input v-model="form.email" type="email" placeholder="your@email.com" :disabled="saving" />
-          </div>
-          <div class="form-group">
-            <label>Phone Number</label>
-            <input v-model="form.phone" type="tel" placeholder="+65XXXXXXXX" :disabled="saving" />
-          </div>
+    <!-- ── HERO HEADER ──────────────────────────────────────── -->
+    <div class="profile-hero">
+      <div class="profile-hero__orb" aria-hidden="true"></div>
+      <div class="profile-hero__inner view-container">
+        <div class="profile-avatar">
+          {{ (form.name || authStore.currentUser?.email || 'U').charAt(0).toUpperCase() }}
+        </div>
+        <div class="profile-hero__copy">
+          <h1>{{ form.name || 'Driver Profile' }}</h1>
+          <p class="profile-hero__email">{{ authStore.currentUser?.email }}</p>
+        </div>
+        <div class="profile-hero__badge-wrap">
+          <span v-if="licenseExpired" class="hero-badge hero-badge--red">
+            <span class="hero-badge-dot"></span>License Expired
+          </span>
+          <span v-else-if="driverExists" class="hero-badge hero-badge--green">
+            <span class="hero-badge-dot"></span>Verified Driver
+          </span>
+          <span v-else class="hero-badge hero-badge--amber">
+            <span class="hero-badge-dot"></span>Unregistered
+          </span>
         </div>
       </div>
     </div>
 
-    <!-- Driver License Card -->
-    <div class="card">
-      <div class="card-header">
-        <h3>Driver License</h3>
-        <span v-if="licenseExpired" class="badge expired">Expired</span>
-        <span v-else-if="driverExists" class="badge valid">Valid</span>
-        <span v-else class="badge unregistered">Not registered</span>
+    <!-- ── BODY ─────────────────────────────────────────────── -->
+    <div class="view-container profile-body">
+
+      <div v-if="statusMsg" class="status-toast" :class="statusType">
+        <svg v-if="statusType === 'success'" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <svg v-else width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        {{ statusMsg }}
       </div>
-      <div class="card-body">
-        <div class="form-grid">
-          <div class="form-group">
-            <label>License Number</label>
-            <input v-model="form.license_number" type="text" placeholder="e.g. S1234567A" :disabled="saving || driverExists" />
-            <p v-if="driverExists" class="field-hint">License number cannot be changed after registration.</p>
-          </div>
-          <div class="form-group">
-            <label>License Expiry</label>
-            <input v-model="form.license_expiry" type="date" :disabled="saving" />
+
+      <!-- Personal Info -->
+      <div class="profile-section">
+        <div class="section-label">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+          Personal Information
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>Full Name</label>
+                <input v-model="form.name" type="text" placeholder="Your name" :disabled="saving" />
+              </div>
+              <div class="form-group">
+                <label>Email</label>
+                <input v-model="form.email" type="email" placeholder="your@email.com" :disabled="saving" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
+
+      <!-- Driver License -->
+      <div class="profile-section">
+        <div class="section-label">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M16 10h2M16 14h2M6 10h4v4H6z"/></svg>
+          Driver License
+          <span v-if="licenseExpired" class="label-badge label-badge--red">Expired</span>
+          <span v-else-if="driverExists" class="label-badge label-badge--green">Valid</span>
+          <span v-else class="label-badge label-badge--amber">Not registered</span>
+        </div>
+        <div class="card">
+          <div class="card-body">
+            <div class="form-grid">
+              <div class="form-group">
+                <label>License Number</label>
+                <input v-model="form.license_number" type="text" placeholder="e.g. S1234567A" :disabled="saving || driverExists" />
+                <p v-if="driverExists" class="field-hint">Cannot be changed after registration.</p>
+              </div>
+              <div class="form-group">
+                <label>License Expiry</label>
+                <input v-model="form.license_expiry" type="date" :disabled="saving" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- UID -->
+      <div class="uid-box">
+        <span class="uid-label">Firebase UID</span>
+        <span class="uid-value">{{ authStore.currentUser?.uid }}</span>
+      </div>
+
+      <p v-if="saveError" class="error-msg">{{ saveError }}</p>
+
+      <button class="btn-primary save-btn" @click="saveProfile" :disabled="saving">
+        <span class="btn-spinner" v-if="saving" aria-hidden="true"></span>
+        {{ saving ? 'Saving...' : driverExists ? 'Save Changes' : 'Register Driver Profile' }}
+      </button>
+
     </div>
-
-    <!-- Firebase UID (read-only) -->
-    <div class="uid-box">
-      <span class="uid-label">Firebase UID</span>
-      <span class="uid-value">{{ authStore.currentUser?.uid }}</span>
-    </div>
-
-    <!-- Error / success -->
-    <p v-if="saveError" class="error-msg">{{ saveError }}</p>
-
-    <button class="btn-primary" @click="saveProfile" :disabled="saving">
-      {{ saving ? 'Saving...' : driverExists ? 'Save Changes' : 'Register Driver Profile' }}
-    </button>
   </div>
 </template>
 
@@ -85,7 +118,6 @@ const form = ref({
   email:           '',
   license_number:  '',
   license_expiry:  '',
-  phone:           '',
 })
 
 const licenseExpired = computed(() => {
@@ -96,9 +128,7 @@ const licenseExpired = computed(() => {
 onMounted(async () => {
   const uid = authStore.currentUser?.uid
   if (!uid) return
-  // Pre-fill email from Firebase Auth
   form.value.email = authStore.currentUser?.email || ''
-  // Fetch existing driver record
   try {
     const res = await api.get(`/api/drivers/${uid}`)
     const d = res.data.data || res.data
@@ -106,7 +136,6 @@ onMounted(async () => {
     form.value.email          = d.email          || form.value.email
     form.value.license_number = d.license_number || ''
     form.value.license_expiry = d.license_expiry || ''
-    form.value.phone          = d.phone          || ''
     driverExists.value = true
     statusMsg.value  = 'Driver record found — fields pre-filled.'
     statusType.value = 'success'
@@ -128,7 +157,6 @@ async function saveProfile() {
         name:           form.value.name,
         email:          form.value.email,
         license_expiry: form.value.license_expiry,
-        phone:          form.value.phone,
       })
       statusMsg.value  = 'Profile updated successfully.'
       statusType.value = 'success'
@@ -139,7 +167,6 @@ async function saveProfile() {
         email:          form.value.email,
         license_number: form.value.license_number,
         license_expiry: form.value.license_expiry,
-        phone:          form.value.phone,
       })
       driverExists.value = true
       statusMsg.value  = 'Driver profile registered successfully.'
@@ -154,42 +181,179 @@ async function saveProfile() {
 </script>
 
 <style scoped>
-.view-container { max-width: 680px; margin: 0 auto; }
-h1 { margin-bottom: 4px; color: #1a1a2e; }
-.subtitle { color: #888; font-size: 0.9rem; margin-bottom: 20px; }
+.profile-page { min-height: 100vh; }
 
-.status-badge { display: inline-block; padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; margin-bottom: 20px; }
-.status-badge.success { background: #d4edda; color: #155724; }
-.status-badge.info    { background: #d1ecf1; color: #0c5460; }
+/* ── HERO ──────────────────────────────────────────────────── */
+.profile-hero {
+  position: relative;
+  background: var(--c-dark);
+  overflow: hidden;
+  padding: 36px 24px 40px;
+  margin-bottom: 32px;
+}
+.profile-hero__orb {
+  position: absolute;
+  width: 400px; height: 400px;
+  right: -80px; top: -120px;
+  background: radial-gradient(circle, rgba(220,38,38,0.2) 0%, transparent 65%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+.profile-hero__inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
 
-.card { background: white; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); margin-bottom: 20px; overflow: hidden; }
-.card-header { display: flex; align-items: center; gap: 10px; padding: 16px 20px; border-bottom: 1px solid #eee; }
-.card-header h3 { margin: 0; color: #1a1a2e; font-size: 1rem; }
+.profile-avatar {
+  width: 64px; height: 64px;
+  background: var(--c-accent);
+  border-radius: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 4px 20px rgba(220,38,38,0.35);
+}
+
+.profile-hero__copy { flex: 1; min-width: 0; }
+.profile-hero__copy h1 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.3px;
+  margin-bottom: 3px;
+}
+.profile-hero__email { font-size: 13px; color: #94a3b8; }
+
+.profile-hero__badge-wrap { margin-left: auto; }
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.hero-badge-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.hero-badge--green { background: rgba(34,197,94,0.15); color: #4ade80; }
+.hero-badge--red   { background: rgba(220,38,38,0.15);  color: #f87171; }
+.hero-badge--amber { background: rgba(245,158,11,0.15); color: #fbbf24; }
+
+/* ── BODY ──────────────────────────────────────────────────── */
+.profile-body { max-width: 680px; padding-bottom: 48px; }
+
+.status-toast {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 24px;
+}
+.status-toast.success { background: var(--c-success-bg); color: var(--c-success); border: 1px solid #86efac; }
+.status-toast.info    { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
+
+/* Sections */
+.profile-section { margin-bottom: 8px; }
+.section-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--c-muted);
+  margin-bottom: 10px;
+}
+
+.label-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  margin-left: 4px;
+}
+.label-badge--green { background: var(--c-success-bg); color: var(--c-success); }
+.label-badge--red   { background: var(--c-error-bg);   color: var(--c-error); }
+.label-badge--amber { background: var(--c-warn-bg);    color: var(--c-warn); }
+
+.card {
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 20px;
+}
 .card-body { padding: 20px; }
 
-.badge { font-size: 0.7rem; padding: 3px 8px; border-radius: 10px; font-weight: 600; }
-.badge.valid       { background: #d4edda; color: #155724; }
-.badge.expired     { background: #f8d7da; color: #721c24; }
-.badge.unregistered { background: #fff3cd; color: #856404; }
-
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.form-group { display: flex; flex-direction: column; gap: 6px; }
-.form-group label { font-size: 0.85rem; color: #555; }
-.form-group input { padding: 9px 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.95rem; }
-.form-group input:disabled { background: #f9f9f9; color: #999; }
-.form-group input:focus { outline: none; border-color: #1a1a2e; }
-.field-hint { font-size: 0.75rem; color: #999; margin: 0; }
+.field-hint { font-size: 11px; color: var(--c-muted); margin: 4px 0 0; }
 
-.uid-box { background: #f5f5f5; border-radius: 6px; padding: 12px 16px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 4px; }
-.uid-label { font-size: 0.75rem; color: #888; }
-.uid-value { font-size: 0.85rem; color: #555; font-family: monospace; word-break: break-all; }
+/* UID */
+.uid-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  margin-bottom: 24px;
+}
+.uid-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--c-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.uid-value {
+  font-size: 12px;
+  color: var(--c-dark);
+  font-family: 'Courier New', monospace;
+  word-break: break-all;
+  min-width: 0;
+}
 
-.error-msg { color: #e94560; font-size: 0.875rem; margin-bottom: 12px; }
-.btn-primary { padding: 12px 28px; background: #1a1a2e; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem; }
-.btn-primary:disabled { background: #999; cursor: not-allowed; }
-.btn-primary:hover:not(:disabled) { background: #16213e; }
+.save-btn {
+  padding: 13px 32px;
+  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-spinner {
+  width: 14px; height: 14px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
 @media (max-width: 540px) {
   .form-grid { grid-template-columns: 1fr; }
+  .profile-hero__badge-wrap { width: 100%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn-spinner { animation: none; }
 }
 </style>
