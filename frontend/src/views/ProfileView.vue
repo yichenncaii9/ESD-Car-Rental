@@ -35,6 +35,15 @@
         {{ statusMsg }}
       </div>
 
+      <!-- Onboarding welcome banner -->
+      <div v-if="isOnboarding && !driverExists" class="onboarding-banner">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <div>
+          <strong>Welcome! Complete your profile to get started.</strong>
+          <p>Fill in your details and driver license below, then click Register.</p>
+        </div>
+      </div>
+
       <!-- Personal Info -->
       <div class="profile-section">
         <div class="section-label">
@@ -51,6 +60,10 @@
               <div class="form-group">
                 <label>Email</label>
                 <input v-model="form.email" type="email" placeholder="your@email.com" :disabled="saving" />
+              </div>
+              <div class="form-group">
+                <label>Phone Number</label>
+                <input v-model="form.phone" type="tel" placeholder="e.g. +65 9123 4567" :disabled="saving" />
               </div>
             </div>
           </div>
@@ -102,10 +115,15 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import api from '../axios'
 import { useAuthStore } from '../stores/auth'
 
 const authStore = useAuthStore()
+const route = useRoute()
+const router = useRouter()
+
+const isOnboarding = computed(() => route.query.onboarding === '1')
 
 const driverExists = ref(false)
 const saving       = ref(false)
@@ -116,6 +134,7 @@ const statusType   = ref('success')
 const form = ref({
   name:            '',
   email:           '',
+  phone:           '',
   license_number:  '',
   license_expiry:  '',
 })
@@ -134,6 +153,7 @@ onMounted(async () => {
     const d = res.data.data || res.data
     form.value.name           = d.name           || ''
     form.value.email          = d.email          || form.value.email
+    form.value.phone          = d.phone          || ''
     form.value.license_number = d.license_number || ''
     form.value.license_expiry = d.license_expiry || ''
     driverExists.value = true
@@ -156,6 +176,7 @@ async function saveProfile() {
       await api.put(`/api/drivers/${uid}`, {
         name:           form.value.name,
         email:          form.value.email,
+        phone:          form.value.phone,
         license_expiry: form.value.license_expiry,
       })
       statusMsg.value  = 'Profile updated successfully.'
@@ -165,10 +186,16 @@ async function saveProfile() {
         uid,
         name:           form.value.name,
         email:          form.value.email,
+        phone:          form.value.phone,
         license_number: form.value.license_number,
         license_expiry: form.value.license_expiry,
       })
       driverExists.value = true
+      authStore.setProfileComplete(true)
+      if (isOnboarding.value) {
+        router.push('/book-car')
+        return
+      }
       statusMsg.value  = 'Driver profile registered successfully.'
       statusType.value = 'success'
     }
@@ -332,6 +359,24 @@ async function saveProfile() {
   word-break: break-all;
   min-width: 0;
 }
+
+.onboarding-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-left: 3px solid #3b82f6;
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 24px;
+  color: #1e40af;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.onboarding-banner svg { flex-shrink: 0; margin-top: 2px; }
+.onboarding-banner strong { display: block; font-size: 14px; margin-bottom: 2px; }
+.onboarding-banner p { margin: 0; color: #3b82f6; }
 
 .save-btn {
   padding: 13px 32px;

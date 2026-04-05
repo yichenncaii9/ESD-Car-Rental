@@ -33,8 +33,8 @@
       />
     </div>
 
-    <!-- Existing booking banner -->
-    <div v-if="!bookingCheckLoading && existingBooking" class="existing-booking-banner">
+    <!-- Existing booking banner — hidden immediately after a successful booking -->
+    <div v-if="!bookingCheckLoading && existingBooking && !bookingJustSucceeded" class="existing-booking-banner">
       <div class="existing-booking-banner__body">
         <strong>You already have an active booking</strong>
         <span>Booking <code>{{ existingBooking.id }}</code> is still active or upcoming. Cancel it before making a new one.</span>
@@ -69,8 +69,8 @@
         <p v-else-if="priceLoading" class="price-loading">Calculating price…</p>
         <p v-if="bookingError" class="error-msg">{{ bookingError }}</p>
         <p v-if="bookingSuccess" class="success-msg">{{ bookingSuccess }}</p>
-        <button type="button" class="btn-primary" :disabled="submitting || !estimatedPrice" @click="openPaymentModal">
-          {{ submitting ? 'Booking...' : `Pay SGD ${estimatedPrice ? estimatedPrice.toFixed(2) : '—'} & Book` }}
+        <button type="button" class="btn-primary" :disabled="submitting || !estimatedPrice || bookingCheckLoading" @click="openPaymentModal">
+          {{ submitting ? 'Booking...' : bookingCheckLoading ? 'Checking availability…' : `Pay SGD ${estimatedPrice ? estimatedPrice.toFixed(2) : '—'} & Book` }}
         </button>
       </form>
     </div>
@@ -160,6 +160,10 @@ const authStore = useAuthStore()
 // Existing booking guard — true if user already has a confirmed booking not yet expired
 const existingBooking    = ref(null)
 const bookingCheckLoading = ref(true)
+// Suppress the "cancel before booking" banner immediately after a successful booking.
+// existingBooking is still set (so openPaymentModal blocks double-booking), but we
+// don't want to show the scary red banner right after the user just confirmed a booking.
+const bookingJustSucceeded = ref(false)
 
 // Returns true if the booking is confirmed AND its end time (pickup + hours) is in the future.
 // Covers both currently-active and upcoming bookings.
@@ -703,11 +707,12 @@ async function submitBooking() {
     })
 
     bookingSuccess.value = `Booking confirmed! ID: ${res.data.booking_id || res.data.id}`
+    bookingJustSucceeded.value = true  // suppress "cancel before booking" banner
     closePaymentModal()
     selectedVehicle.value = null
     estimatedPrice.value = null
     await loadVehicles()
-    await checkExistingBooking()
+    await checkExistingBooking()  // still sets existingBooking so openPaymentModal blocks re-booking
   } catch (err) {
     bookingError.value =
       err.response?.data?.error ||

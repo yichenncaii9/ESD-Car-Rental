@@ -72,12 +72,14 @@ import { useAuthStore } from '../stores/auth'
 
 const authStore = useAuthStore()
 
-// Returns true only if booking is confirmed and pickup has not yet started
-// (cancellation is only valid before the rental window opens)
+// Returns true if booking is confirmed and the rental window has not yet ended.
+// This covers both upcoming bookings (before pickup) and in-progress rentals
+// (past pickup but not yet past pickup + hours), ensuring mid-rental bookings
+// are visible and cancellable — matching BookCarView's active booking guard.
 function isBookingCancellable(booking) {
   if (!booking || booking.status !== 'confirmed') return false
-  const pickup = new Date(booking.pickup_datetime).getTime()
-  return Date.now() < pickup
+  const end = new Date(booking.pickup_datetime).getTime() + (booking.hours || 0) * 3600 * 1000
+  return Date.now() < end
 }
 
 const activeBooking    = ref(null)

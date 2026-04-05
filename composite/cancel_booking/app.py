@@ -115,6 +115,7 @@ def cancel_booking():
                      json={"status": "cancelled"}, timeout=5)
     if r.status_code != 200:
         print(f"[cancel_booking] booking_service status update failed ({r.status_code})")
+        return jsonify({"status": "error", "message": "Failed to update booking status. Please try again."}), 502
 
     # Step 7: Write refund_status to Firestore directly if pending_manual
     # (booking_service PUT /status only updates "status" field — cannot set refund_status)
