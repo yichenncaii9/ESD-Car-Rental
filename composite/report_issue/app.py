@@ -94,11 +94,17 @@ def report_issue():
                       json=openai_payload, timeout=15)
     if r.status_code == 200:
         openai_resp = r.json()
-        severity = openai_resp.get("severity", "medium")
-        ai_evaluation = openai_resp  # store full response { severity, provider }
+        severity           = openai_resp.get("severity", "medium")
+        diagnosis          = openai_resp.get("diagnosis", "unknown")
+        recommended_action = openai_resp.get("recommended_action", "Inspect vehicle before next rental")
+        safe_to_drive      = openai_resp.get("safe_to_drive", False)
+        ai_evaluation      = openai_resp  # store full response blob
     else:
-        severity = "medium"
-        ai_evaluation = None
+        severity           = "medium"
+        diagnosis          = "unknown"
+        recommended_action = "Inspect vehicle before next rental"
+        safe_to_drive      = False
+        ai_evaluation      = None
         print(f"[report_issue] OpenAI evaluate failed ({r.status_code}) — defaulting severity=medium")
 
     # Phase A Step 4: Persist report to report_service (COMP-08)
@@ -118,20 +124,29 @@ def report_issue():
     # report_service POST /reports creates with severity=None; evaluation endpoint sets it
     try:
         requests.put(f"http://{REPORT_HOST}/api/reports/{report_id}/evaluation",
-                     json={"severity": severity, "ai_evaluation": ai_evaluation}, timeout=5)
+                     json={
+                         "severity":           severity,
+                         "diagnosis":          diagnosis,
+                         "recommended_action": recommended_action,
+                         "safe_to_drive":      safe_to_drive,
+                         "ai_evaluation":      ai_evaluation,
+                     }, timeout=5)
     except Exception as e:
         print(f"[report_issue] Severity update failed: {e} — severity stored in response only")
 
     # Phase B (inline): Publish to RabbitMQ (COMP-09)
     # Failure logged but does not block Phase A response
     publish_report_event({
-        "report_id": report_id,
-        "booking_id": booking_id,
-        "vehicle_id": vehicle_id,
-        "user_uid": user_uid,
-        "severity": severity,
-        "location": address,
-        "description": description,
+        "report_id":          report_id,
+        "booking_id":         booking_id,
+        "vehicle_id":         vehicle_id,
+        "user_uid":           user_uid,
+        "severity":           severity,
+        "diagnosis":          diagnosis,
+        "recommended_action": recommended_action,
+        "safe_to_drive":      safe_to_drive,
+        "location":           address,
+        "description":        description,
     })
 
     # Return COMP-10 response shape
