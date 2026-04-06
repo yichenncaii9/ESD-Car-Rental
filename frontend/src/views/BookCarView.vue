@@ -115,29 +115,19 @@
 
       <div class="payment-modal__body">
         <label class="payment-modal__label">Card Details</label>
-        <div class="dummy-card-fields">
-          <div class="dummy-field-group">
-            <label class="dummy-field-label">Card Number</label>
-            <input class="dummy-field-input" type="text" value="4242 4242 4242 4242" readonly />
-          </div>
-          <div class="dummy-field-row">
-            <div class="dummy-field-group">
-              <label class="dummy-field-label">Expiry</label>
-              <input class="dummy-field-input" type="text" value="12/34" readonly />
-            </div>
-            <div class="dummy-field-group">
-              <label class="dummy-field-label">CVC</label>
-              <input class="dummy-field-input" type="text" value="123" readonly />
-            </div>
-          </div>
+        <p class="payment-test-hint">Stripe test mode. Use card 4242 4242 4242 4242, any future date, and any CVC.</p>
+        <div v-if="stripeConfigured" class="stripe-card-shell" :class="{ 'is-loading': paymentElementLoading }">
+          <div ref="cardElementMountRef" class="stripe-card-element"></div>
         </div>
+        <p v-else class="error-msg payment-error">Stripe test mode is not configured for this environment.</p>
+        <p v-if="paymentElementError" class="error-msg payment-error">{{ paymentElementError }}</p>
       </div>
 
       <div class="payment-modal__footer">
         <button type="button" class="btn-primary payment-confirm-btn"
-          :disabled="submitting"
+          :disabled="submitting || paymentElementLoading || !stripeConfigured || !paymentElementComplete"
           @click="submitBooking">
-          {{ submitting ? 'Processing…' : `Pay SGD ${estimatedPrice?.toFixed(2)}` }}
+          {{ submitting ? 'Processing…' : paymentElementLoading ? 'Loading payment form…' : `Pay SGD ${estimatedPrice?.toFixed(2)}` }}
         </button>
         <button type="button" class="payment-cancel-btn" :disabled="submitting" @click="closePaymentModal">
           Cancel
@@ -148,12 +138,14 @@
 </template>
 
 <script setup>
+import { loadStripe } from '@stripe/stripe-js'
 import axios from 'axios'
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import api from '../axios'
 import { useAuthStore } from '../stores/auth'
 
 const paymentModalOpen = ref(false)
+const cardElementMountRef = ref(null)
 
 const authStore = useAuthStore()
 
@@ -230,15 +222,104 @@ function openPaymentModal() {
   }
   bookingError.value = ''
   paymentModalOpen.value = true
+  nextTick(() => {
+    void ensureStripeCardElement()
+  })
 }
 
 function closePaymentModal() {
   paymentModalOpen.value = false
+  teardownStripeCardElement()
 }
 
 const submitting = ref(false)
 const bookingError = ref('')
 const bookingSuccess = ref('')
+const paymentElementError = ref('')
+const paymentElementLoading = ref(false)
+const paymentElementComplete = ref(false)
+
+const stripePublishableKey = (import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '').trim()
+const stripeConfigured = computed(() => Boolean(stripePublishableKey))
+
+let stripeClientPromise = null
+let stripeClient = null
+let stripeElements = null
+let stripeCardElement = null
+
+function getStripeClientPromise() {
+  if (!stripeClientPromise) {
+    stripeClientPromise = loadStripe(stripePublishableKey)
+  }
+  return stripeClientPromise
+}
+
+async function ensureStripeCardElement() {
+  if (!stripeConfigured.value) {
+    paymentElementError.value = 'Stripe test mode is not configured for this environment.'
+    return false
+  }
+  if (stripeCardElement) return true
+
+  paymentElementLoading.value = true
+  paymentElementError.value = ''
+
+  try {
+    stripeClient = stripeClient || await getStripeClientPromise()
+    if (!stripeClient) {
+      paymentElementError.value = 'Unable to load Stripe right now. Please refresh and try again.'
+      return false
+    }
+
+    stripeElements = stripeElements || stripeClient.elements()
+    stripeCardElement = stripeElements.create('card', {
+      hidePostalCode: true,
+      style: {
+        base: {
+          color: '#102542',
+          fontFamily: 'DM Sans, system-ui, sans-serif',
+          fontSize: '15px',
+          '::placeholder': {
+            color: '#94a3b8',
+          },
+        },
+        invalid: {
+          color: '#dc2626',
+        },
+      },
+    })
+
+    stripeCardElement.on('change', (event) => {
+      paymentElementComplete.value = event.complete
+      paymentElementError.value = event.error?.message || ''
+    })
+
+    if (!cardElementMountRef.value) {
+      await nextTick()
+    }
+
+    stripeCardElement.mount(cardElementMountRef.value)
+    return true
+  } catch (err) {
+    console.error('Failed to initialize Stripe card element:', err)
+    paymentElementError.value = 'Unable to load the payment form right now.'
+    return false
+  } finally {
+    paymentElementLoading.value = false
+  }
+}
+
+function teardownStripeCardElement() {
+  paymentElementLoading.value = false
+  paymentElementComplete.value = false
+  paymentElementError.value = ''
+
+  if (stripeCardElement) {
+    stripeCardElement.unmount()
+    stripeCardElement.destroy()
+    stripeCardElement = null
+  }
+}
 
 const availableVehicles = computed(() =>
   vehicles.value.filter((vehicle) =>
@@ -637,12 +718,19 @@ async function checkExistingBooking() {
   if (!uid) { bookingCheckLoading.value = false; return }
   try {
     let res
-    for (const baseURL of fallbackBookingBaseUrls) {
-      try {
-        res = await bookingApi.get(`/api/bookings/user/${uid}/active`, { baseURL })
-        break
-      } catch (err) {
-        if (err?.response?.status === 404) break
+    try {
+      res = await api.get(`/api/bookings/user/${uid}/active`)
+    } catch (gatewayErr) {
+      for (const baseURL of fallbackBookingBaseUrls) {
+        try {
+          res = await bookingApi.get(`/api/bookings/user/${uid}/active`, { baseURL })
+          break
+        } catch (err) {
+          if (err?.response?.status === 404) break
+        }
+      }
+      if (!res && gatewayErr?.response?.status && gatewayErr.response.status !== 404) {
+        throw gatewayErr
       }
     }
     const booking = res?.data?.data ?? res?.data
@@ -655,8 +743,6 @@ async function checkExistingBooking() {
 }
 
 onMounted(async () => {
-  await checkExistingBooking()
-
   // Reactively unlock the form once the existing booking expires
   bookingValidityTimer = setInterval(() => {
     if (existingBooking.value && !isBookingActiveOrUpcoming(existingBooking.value)) {
@@ -676,10 +762,20 @@ onMounted(async () => {
   renderLocationMarkers()
 })
 
+watch(
+  () => authStore.currentUser?.uid,
+  () => {
+    bookingCheckLoading.value = true
+    checkExistingBooking()
+  },
+  { immediate: true }
+)
+
 onUnmounted(() => {
   clearInterval(bookingValidityTimer)
   clearMarkerOverlays()
   closeLocationPopup()
+  teardownStripeCardElement()
   if (mapClickListener.value && window.google?.maps?.event) {
     window.google.maps.event.removeListener(mapClickListener.value)
   }
@@ -691,11 +787,34 @@ async function submitBooking() {
     bookingError.value = 'You already have an active or upcoming booking. Cancel it first.'
     return
   }
+  if (!stripeConfigured.value) {
+    paymentElementError.value = 'Stripe test mode is not configured for this environment.'
+    return
+  }
   submitting.value = true
   bookingError.value = ''
   bookingSuccess.value = ''
+  paymentElementError.value = ''
 
   try {
+    const ready = await ensureStripeCardElement()
+    if (!ready || !stripeClient || !stripeCardElement) {
+      throw new Error('Stripe payment form is unavailable.')
+    }
+
+    const paymentMethodResult = await stripeClient.createPaymentMethod({
+      type: 'card',
+      card: stripeCardElement,
+      billing_details: {
+        email: authStore.currentUser?.email || undefined,
+      },
+    })
+
+    if (paymentMethodResult.error) {
+      paymentElementError.value = paymentMethodResult.error.message || 'Invalid card details.'
+      return
+    }
+
     const uid = authStore.currentUser?.uid
     const res = await api.post('/api/book-car', {
       user_uid:         uid,
@@ -703,7 +822,7 @@ async function submitBooking() {
       vehicle_type:     selectedVehicle.value.vehicle_type,
       pickup_datetime:  pickupDatetime.value,
       hours:            hours.value,
-      payment_method:   'pm_card_visa',
+      payment_method:   paymentMethodResult.paymentMethod.id,
     })
 
     bookingSuccess.value = `Booking confirmed! ID: ${res.data.booking_id || res.data.id}`
@@ -1017,20 +1136,33 @@ async function submitBooking() {
 .payment-modal__amount { font-weight: 800; font-size: 18px; }
 .payment-modal__body { padding: 0 24px 8px; }
 .payment-modal__label { font-size: 12px; font-weight: 600; color: var(--c-muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px; }
-.dummy-card-fields { display: flex; flex-direction: column; gap: 12px; }
-.dummy-field-row { display: flex; gap: 12px; }
-.dummy-field-row .dummy-field-group { flex: 1; }
-.dummy-field-group { display: flex; flex-direction: column; gap: 4px; }
-.dummy-field-label { font-size: 11px; font-weight: 600; color: var(--c-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-.dummy-field-input {
+.payment-test-hint {
+  font-size: 13px;
+  color: var(--c-muted);
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+.stripe-card-shell {
   border: 1.5px solid var(--c-border);
   border-radius: var(--radius-sm);
-  padding: 10px 12px;
+  padding: 12px 14px;
   background: var(--c-bg);
-  font-size: 14px; color: var(--c-dark);
-  font-family: monospace;
-  cursor: default;
-  width: 100%; box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s, opacity 0.15s;
+}
+.stripe-card-shell:focus-within {
+  border-color: var(--c-accent);
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+}
+.stripe-card-shell.is-loading {
+  opacity: 0.65;
+}
+.stripe-card-element {
+  min-height: 22px;
+  width: 100%;
+}
+.payment-error {
+  margin-top: 10px;
+  margin-bottom: 0;
 }
 .payment-modal__footer {
   display: flex; gap: 10px; padding: 16px 24px 24px;

@@ -68,6 +68,16 @@ def refund():
     payment_intent_id = body.get("payment_intent_id", "")
     amount_dollars = float(body.get("amount", 0))
     amount_cents = int(round(amount_dollars * 100)) if amount_dollars > 0 else None
+    force_failure = bool(body.get("force_failure"))
+
+    if force_failure:
+        mock_refund_id = f"mock_re_{uuid.uuid4().hex}"
+        print("[stripe_wrapper] Forced demo refund failure requested — returning fallback refund")
+        return jsonify({
+            "status": "ok",
+            "refund_id": mock_refund_id,
+            "provider": "fallback",
+        }), 200
 
     # Mock intents cannot be refunded via real Stripe API — detect and short-circuit
     if payment_intent_id.startswith("mock_"):

@@ -34,8 +34,21 @@
       </p>
     </div>
 
+    <p v-if="bookingLoadError" class="error-msg">{{ bookingLoadError }}</p>
+
+    <!-- Upcoming booking state -->
+    <div v-if="!bookingLoading && !activeBooking && upcomingBooking" class="empty-state">
+      <p class="empty-icon">🕒</p>
+      <p class="empty-title">Your booking has not started yet</p>
+      <p class="empty-body">
+        Booking <code>{{ upcomingBooking.id }}</code> starts at {{ formatDate(upcomingBooking.pickup_datetime) }}.
+        Incident reporting opens once the rental window begins.
+      </p>
+      <button type="button" class="btn-primary empty-cta" @click="router.push('/cancel-booking')">View Booking</button>
+    </div>
+
     <!-- No active booking state -->
-    <div v-if="!bookingLoading && !activeBooking" class="empty-state">
+    <div v-else-if="!bookingLoading && !activeBooking" class="empty-state">
       <p class="empty-icon">🚗</p>
       <p class="empty-title">No active booking found</p>
       <p class="empty-body">You can only report an incident during an active rental. Please make a booking first.</p>
@@ -138,7 +151,7 @@
 
 <script setup>
 import axios from 'axios'
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../axios'
 import { useAuthStore } from '../stores/auth'
@@ -148,7 +161,9 @@ const router = useRouter()
 
 // Active booking — null means no valid booking in current time window
 const activeBooking  = ref(null)
+const upcomingBooking = ref(null)
 const bookingLoading = ref(true)
+const bookingLoadError = ref('')
 
 // Returns true if booking is confirmed and the rental period has not yet ended
 function isBookingCurrentlyActive(booking) {
@@ -281,8 +296,80 @@ const fallbackBookingBaseUrls = [
 
 function clearActiveBooking() {
   activeBooking.value = null
+  upcomingBooking.value = null
   bookingId.value = ''
   vehicleId.value = ''
+}
+
+function setUpcomingBooking(booking) {
+  upcomingBooking.value = booking
+  activeBooking.value = null
+  bookingId.value = ''
+  vehicleId.value = ''
+}
+
+function hydrateBookingState(booking) {
+  if (booking && isBookingCurrentlyActive(booking)) {
+    upcomingBooking.value = null
+    activeBooking.value = booking
+    bookingId.value  = booking.id || ''
+    vehicleId.value  = booking.vehicle_id || ''
+    return
+  }
+
+  if (booking && booking.status === 'confirmed') {
+    setUpcomingBooking(booking)
+    return
+  }
+
+  clearActiveBooking()
+}
+
+async function fetchBookingForReport(uid) {
+  bookingLoading.value = true
+  bookingLoadError.value = ''
+  clearActiveBooking()
+
+  if (!uid) {
+    bookingLoading.value = false
+    return
+  }
+
+  try {
+    let res
+    let lastFallbackError = null
+
+    try {
+      res = await api.get(`/api/bookings/user/${uid}/active`)
+    } catch (gatewayErr) {
+      lastFallbackError = gatewayErr
+      for (const baseURL of fallbackBookingBaseUrls) {
+        try {
+          res = await bookingApi.get(`/api/bookings/user/${uid}/active`, { baseURL })
+          break
+        } catch (fallbackErr) {
+          if (fallbackErr?.response?.status === 404) {
+            lastFallbackError = fallbackErr
+            break
+          }
+          lastFallbackError = fallbackErr
+        }
+      }
+    }
+
+    if (!res) throw lastFallbackError || new Error('Unable to load active booking')
+
+    const booking = res.data?.data ?? res.data
+    hydrateBookingState(booking)
+  } catch (err) {
+    const status = err?.response?.status
+    if (status && status !== 404) {
+      bookingLoadError.value =
+        err.response?.data?.message || err.response?.data?.error || 'Unable to load your booking right now.'
+    }
+  } finally {
+    bookingLoading.value = false
+  }
 }
 
 onMounted(async () => {
@@ -294,37 +381,6 @@ onMounted(async () => {
     )
   }
 
-  // Fetch booking and validate against current time window
-  try {
-    const uid = authStore.currentUser?.uid
-    if (!uid) return
-    let res
-    let lastFallbackError = null
-
-    for (const baseURL of fallbackBookingBaseUrls) {
-      try {
-        res = await bookingApi.get(`/api/bookings/user/${uid}/active`, { baseURL })
-        break
-      } catch (fallbackErr) {
-        if (fallbackErr?.response?.status === 404) { lastFallbackError = fallbackErr; break }
-        lastFallbackError = fallbackErr
-      }
-    }
-
-    if (!res) throw lastFallbackError || new Error('Unable to load active booking')
-
-    const booking = res.data?.data ?? res.data
-    if (booking && isBookingCurrentlyActive(booking)) {
-      activeBooking.value = booking
-      bookingId.value  = booking.id        || ''
-      vehicleId.value  = booking.vehicle_id || ''
-    }
-  } catch {
-    // No active booking — show empty state
-  } finally {
-    bookingLoading.value = false
-  }
-
   // Reactively expire the booking when its rental period ends (check every 30 seconds)
   validityTimer = setInterval(() => {
     if (activeBooking.value && !isBookingCurrentlyActive(activeBooking.value)) {
@@ -332,6 +388,14 @@ onMounted(async () => {
     }
   }, 30000)
 })
+
+watch(
+  () => authStore.currentUser?.uid,
+  (uid) => {
+    fetchBookingForReport(uid)
+  },
+  { immediate: true }
+)
 
 function onPlaceChanged(place) {
   if (place && place.geometry && place.geometry.location) {

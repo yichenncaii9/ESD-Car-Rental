@@ -2,6 +2,8 @@
   <div class="view-container">
     <h1>Cancel Booking</h1>
 
+    <p v-if="bookingLoadError" class="error-msg">{{ bookingLoadError }}</p>
+
     <!-- Auto-fetched active booking -->
     <div v-if="activeBooking" class="booking-card">
       <h3>Your Active Booking</h3>
@@ -12,9 +14,13 @@
 
       <div class="cancel-section">
         <p class="warning">Cancellation policy: Full refund if more than 24 hours before pickup, 50% refund within 24 hours, no refund within 1 hour.</p>
+        <label v-if="demoMode" class="demo-toggle">
+          <input v-model="forceRefundFailure" type="checkbox" />
+          Force Stripe refund failure for demo
+        </label>
         <p v-if="cancelError" class="error-msg">{{ cancelError }}</p>
         <p v-if="cancelResult" class="success-msg">
-          Cancelled. Refund: ${{ cancelResult.refund_amount }} ({{ cancelResult.refund_status }})
+          Cancelled. Refund: ${{ cancelResult.refund_amount }} ({{ cancelResult.refund_status }}, {{ cancelResult.refund_provider || 'unknown' }})
         </p>
         <button
           v-if="!cancelResult"
@@ -46,9 +52,13 @@
         <p><strong>Vehicle:</strong> {{ lookedUpBooking.vehicle_id }}</p>
         <p><strong>Pickup:</strong> {{ formatDate(lookedUpBooking.pickup_datetime) }}</p>
         <p><strong>Status:</strong> {{ lookedUpBooking.status }}</p>
+        <label v-if="demoMode" class="demo-toggle">
+          <input v-model="forceRefundFailure" type="checkbox" />
+          Force Stripe refund failure for demo
+        </label>
         <p v-if="manualCancelError" class="error-msg">{{ manualCancelError }}</p>
         <p v-if="manualCancelResult" class="success-msg">
-          Cancelled. Refund: ${{ manualCancelResult.refund_amount }} ({{ manualCancelResult.refund_status }})
+          Cancelled. Refund: ${{ manualCancelResult.refund_amount }} ({{ manualCancelResult.refund_status }}, {{ manualCancelResult.refund_provider || 'unknown' }})
         </p>
         <button
           v-if="!manualCancelResult && isBookingCancellable(lookedUpBooking)"
@@ -66,11 +76,13 @@
 
 <script setup>
 import axios from 'axios'
-import { ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref, watch, onUnmounted } from 'vue'
+import { useRoute } from 'vue-router'
 import api from '../axios'
 import { useAuthStore } from '../stores/auth'
 
 const authStore = useAuthStore()
+const route = useRoute()
 
 // Returns true if booking is confirmed and the rental window has not yet ended.
 // This covers both upcoming bookings (before pickup) and in-progress rentals
@@ -92,6 +104,9 @@ const manualCancelError = ref('')
 const lookupError      = ref('')
 const cancelling       = ref(false)
 const looking          = ref(false)
+const bookingLoadError = ref('')
+const forceRefundFailure = ref(false)
+const demoMode = computed(() => route.query.demo === '1')
 
 const envBookingBaseUrl = (import.meta.env.VITE_BOOKING_SERVICE_URL || '').trim()
 
@@ -131,41 +146,65 @@ let validityTimer = null
 
 onUnmounted(() => clearInterval(validityTimer))
 
-onMounted(async () => {
+async function fetchActiveBooking(uid) {
+  bookingLoadError.value = ''
+  cancelResult.value = null
+  cancelError.value = ''
+  activeBooking.value = null
+
+  if (!uid) return
+
   try {
-    const uid = authStore.currentUser?.uid
-    if (!uid) return
     let res
     let lastFallbackError = null
 
-    for (const baseURL of fallbackBookingBaseUrls) {
-      try {
-        res = await bookingApi.get(`/api/bookings/user/${uid}/active`, { baseURL })
-        break
-      } catch (fallbackErr) {
-        if (fallbackErr?.response?.status === 404) { lastFallbackError = fallbackErr; break }
-        lastFallbackError = fallbackErr
+    try {
+      res = await api.get(`/api/bookings/user/${uid}/active`)
+    } catch (gatewayErr) {
+      lastFallbackError = gatewayErr
+      for (const baseURL of fallbackBookingBaseUrls) {
+        try {
+          res = await bookingApi.get(`/api/bookings/user/${uid}/active`, { baseURL })
+          break
+        } catch (fallbackErr) {
+          if (fallbackErr?.response?.status === 404) {
+            lastFallbackError = fallbackErr
+            break
+          }
+          lastFallbackError = fallbackErr
+        }
       }
     }
 
     if (!res) throw lastFallbackError || new Error('Unable to load active booking')
 
     const booking = res.data?.data ?? res.data
-    // Only display if booking is still cancellable (confirmed + before pickup)
     if (booking && isBookingCancellable(booking)) {
       activeBooking.value = booking
     }
-  } catch {
-    // No cancellable booking — show manual lookup only
-  }
-
-  // Reactively hide the booking card once it's no longer cancellable
-  validityTimer = setInterval(() => {
-    if (activeBooking.value && !isBookingCancellable(activeBooking.value)) {
-      activeBooking.value = null
+  } catch (err) {
+    const status = err?.response?.status
+    if (status && status !== 404) {
+      bookingLoadError.value =
+        err.response?.data?.message || err.response?.data?.error || 'Unable to load your booking right now.'
     }
-  }, 5000)
-})
+  }
+}
+
+watch(
+  () => authStore.currentUser?.uid,
+  (uid) => {
+    fetchActiveBooking(uid)
+  },
+  { immediate: true }
+)
+
+// Reactively hide the booking card once it's no longer cancellable
+validityTimer = setInterval(() => {
+  if (activeBooking.value && !isBookingCancellable(activeBooking.value)) {
+    activeBooking.value = null
+  }
+}, 5000)
 
 async function lookupBooking() {
   looking.value = true
@@ -187,7 +226,10 @@ async function cancelBooking(bookingId, isManual = false) {
   if (isManual) manualCancelError.value = ''
   else cancelError.value = ''
   try {
-    const res = await api.post('/api/cancel-booking', { booking_id: bookingId })
+    const res = await api.post('/api/cancel-booking', {
+      booking_id: bookingId,
+      force_refund_failure: demoMode.value && forceRefundFailure.value
+    })
     if (isManual) manualCancelResult.value = res.data
     else cancelResult.value = res.data
   } catch (err) {
@@ -243,6 +285,18 @@ h1 {
 }
 
 .cancel-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--c-border); }
+.demo-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 14px 0;
+  font-size: 13px;
+  color: var(--c-dark);
+}
+.demo-toggle input {
+  width: 16px;
+  height: 16px;
+}
 .warning {
   display: flex;
   align-items: flex-start;

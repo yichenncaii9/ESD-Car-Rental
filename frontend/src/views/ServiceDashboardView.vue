@@ -127,6 +127,17 @@ const lastEvent   = ref('')
 const eventLog    = ref([])   // last 5 raw events
 let socket = null
 
+const envSocketBaseUrl = (import.meta.env.VITE_WEBSOCKET_SERVER_URL || '').trim()
+const envApiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').trim()
+
+function resolveSocketBaseUrl() {
+  if (envSocketBaseUrl) return envSocketBaseUrl
+  if (envApiBaseUrl) return envApiBaseUrl
+  return 'http://localhost:6100'
+}
+
+const socketBaseUrl = resolveSocketBaseUrl()
+
 function formatCoords(report) {
   if (report.lat && report.lng) return `${report.lat.toFixed(4)}, ${report.lng.toFixed(4)}`
   return '—'
@@ -165,7 +176,8 @@ onMounted(async () => {
   }
 
   // Connect Socket.IO to websocket_server
-  socket = io('http://localhost:6100', {
+  socket = io(socketBaseUrl, {
+    path: '/socket.io',
     transports: ['websocket'],
     reconnection: true
   })

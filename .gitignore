@@ -40,3 +40,23 @@ frontend/src/components/DebugReportPanel.vue
 
 # Git worktrees — never commit
 .worktrees/
+
+# Local AI assistant / cleanup-only artifacts — exclude from final submission
+.claude/
+memory/
+CLAUDE.md
+COMMON_ERRORS.md
+IMPLEMENTATION.md
+"Create Order service using OutSystems.md"
+OUTSYSTEMS_PRICING_GUIDE.md
+demo.py
+clear_ghost_bookings.py
+clear_all_reports.py
+clear_empty_diagnosis_reports.py
+verify_phase1.sh
+verify_phase3.sh
+verify_phase4.sh
+scriptsClaude/
+.planning/
+.superpowers/
+docs/superpowers/

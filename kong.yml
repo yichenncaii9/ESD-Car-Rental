@@ -246,6 +246,18 @@ services:
               claims_to_verify:
                 - exp
 
+  # 4b. websocket server
+  - name: websocket-server-service
+    url: http://websocket-server:6100
+    routes:
+      - name: websocket-server-route
+        paths:
+          - /socket.io
+        strip_path: false
+        protocols:
+          - http
+          - https
+
   # 5. vehicle atomic service
   - name: vehicle-service
     url: http://vehicle-service:5001

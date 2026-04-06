@@ -35,6 +35,7 @@ def health():
 def cancel_booking():
     body = request.get_json(silent=True) or {}
     booking_id = body.get("booking_id")
+    force_refund_failure = bool(body.get("force_refund_failure"))
     if not booking_id:
         return jsonify({"status": "error", "message": "Missing required field: booking_id"}), 400
 
@@ -95,13 +96,31 @@ def cancel_booking():
     # Step 5: Attempt Stripe refund (COMP-05, COMP-06)
     payment_intent_id = booking.get("stripe_payment_intent_id", "")
     refund_status = "pending_manual"
+    refund_provider = None
+    refund_id = None
     if refund_amount > 0 and payment_intent_id:
         try:
             r = requests.post(f"http://{STRIPE_HOST}/api/stripe/refund",
-                              json={"payment_intent_id": payment_intent_id, "amount": refund_amount},
+                              json={
+                                  "payment_intent_id": payment_intent_id,
+                                  "amount": refund_amount,
+                                  "force_failure": force_refund_failure,
+                              },
                               timeout=10)
             if r.status_code == 200:
-                refund_status = "processed"
+                refund_resp = r.json()
+                refund_provider = refund_resp.get("provider")
+                refund_id = refund_resp.get("refund_id")
+                if payment_intent_id.startswith("mock_"):
+                    refund_status = "processed"
+                elif refund_provider == "stripe":
+                    refund_status = "processed"
+                else:
+                    refund_status = "pending_manual"
+                    print(
+                        f"[cancel_booking] Stripe refund used fallback/manual path "
+                        f"(provider={refund_provider}, refund_id={refund_id})"
+                    )
             else:
                 print(f"[cancel_booking] Stripe refund returned {r.status_code} — flagging pending_manual")
         except Exception as e:
@@ -109,6 +128,7 @@ def cancel_booking():
     elif refund_amount == 0:
         # 0% refund — no Stripe call needed, mark as processed (nothing to refund)
         refund_status = "processed"
+        refund_provider = "none"
 
     # Step 6: Cancel booking in booking_service
     r = requests.put(f"http://{BOOKING_HOST}/api/bookings/{booking_id}/status",
@@ -117,13 +137,17 @@ def cancel_booking():
         print(f"[cancel_booking] booking_service status update failed ({r.status_code})")
         return jsonify({"status": "error", "message": "Failed to update booking status. Please try again."}), 502
 
-    # Step 7: Write refund_status to Firestore directly if pending_manual
-    # (booking_service PUT /status only updates "status" field — cannot set refund_status)
-    if refund_status == "pending_manual" and db is not None:
+    # Step 7: Persist refund audit fields in Firestore
+    # (booking_service PUT /status only updates "status" field — cannot set refund metadata)
+    if db is not None:
         try:
-            db.collection("bookings").document(booking_id).update({"refund_status": "pending_manual"})
+            db.collection("bookings").document(booking_id).update({
+                "refund_status": refund_status,
+                "refund_provider": refund_provider,
+                "refund_id": refund_id,
+            })
         except Exception as e:
-            print(f"[cancel_booking] Firestore refund_status update failed: {e}")
+            print(f"[cancel_booking] Firestore refund audit update failed: {e}")
 
     # Step 8: Release vehicle — retry once on failure
     vehicle_id = booking.get("vehicle_id")
@@ -146,6 +170,8 @@ def cancel_booking():
         "status": "cancelled",
         "refund_amount": refund_amount,
         "refund_status": refund_status,
+        "refund_provider": refund_provider,
+        "refund_id": refund_id,
     }), 200
 
 

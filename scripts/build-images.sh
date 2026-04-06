@@ -50,6 +50,7 @@ docker build -t esd-frontend:latest \
   --build-arg VITE_FIREBASE_APP_ID="${VITE_FIREBASE_APP_ID}" \
   --build-arg VITE_GOOGLE_MAPS_KEY="${VITE_GOOGLE_MAPS_KEY}" \
   --build-arg VITE_API_BASE_URL="${VITE_API_BASE_URL:-http://localhost:30000}" \
+  --build-arg VITE_STRIPE_PUBLISHABLE_KEY="${VITE_STRIPE_PUBLISHABLE_KEY:-}" \
   "$ROOT/frontend"
 
 echo "=== All images built ==="
