@@ -2,7 +2,11 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
+OVERRIDE_VITE_API_BASE_URL="${VITE_API_BASE_URL:-}"
 set -a; source "$ROOT/.env"; set +a
+if [[ -n "$OVERRIDE_VITE_API_BASE_URL" ]]; then
+  export VITE_API_BASE_URL="$OVERRIDE_VITE_API_BASE_URL"
+fi
 
 echo "=== Building all ESD images ==="
 

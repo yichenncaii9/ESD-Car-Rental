@@ -35,15 +35,60 @@ if [[ "$CURRENT_CONTEXT" != "docker-desktop" ]]; then
   exit 1
 fi
 
-# ── 3. Apply all k8s manifests ─────────────────────────────────────────────────
+# ── 3. Bootstrap Secrets + generated ConfigMaps ───────────────────────────────
+echo "=== Ensuring required Kubernetes Secrets exist ==="
+bash "$ROOT/scripts/setup-secrets.sh"
+
+# ── 4. Apply all k8s manifests ─────────────────────────────────────────────────
 echo "=== Applying k8s manifests ==="
-kubectl apply -f "$ROOT/k8s/" --recursive
+find "$ROOT/k8s" -type f \( -name '*.yaml' -o -name '*.yml' \) \
+  ! -path "$ROOT/k8s/kong/kong.yml" \
+  -print0 | xargs -0 -n 1 kubectl apply -f
 
-# ── 4. Restart all deployments to pick up new images ──────────────────────────
+echo "=== Syncing Kong ConfigMap from k8s/kong/kong.yml ==="
+kubectl create configmap kong-config \
+  --from-file=kong.yml="$ROOT/k8s/kong/kong.yml" \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+DEPLOYMENTS=(
+  vehicle-service
+  booking-service
+  driver-service
+  report-service
+  pricing-service
+  composite-book-car
+  composite-cancel-booking
+  composite-report-issue
+  composite-resolve-issue
+  openai-wrapper
+  googlemaps-wrapper
+  stripe-wrapper
+  twilio-wrapper-http
+  websocket-server
+  twilio-worker
+  activity-log
+  frontend
+  kong
+)
+
+# ── 5. Restart all workloads to pick up new images/config ─────────────────────
 echo "=== Restarting all deployments ==="
-kubectl rollout restart deployment --all
+for deployment in "${DEPLOYMENTS[@]}"; do
+  kubectl rollout restart "deployment/$deployment"
+done
+kubectl rollout restart statefulset/rabbitmq
 
-# ── 5. Push Kong declarative config via admin API ────────────────────────────
+# ── 6. Wait for workloads to stabilize ────────────────────────────────────────
+echo "=== Waiting for RabbitMQ to be ready ==="
+kubectl rollout status statefulset/rabbitmq --timeout=180s
+
+echo "=== Waiting for critical deployments ==="
+for deployment in "${DEPLOYMENTS[@]}"; do
+  echo "  -> $deployment"
+  kubectl rollout status "deployment/$deployment" --timeout=180s
+done
+
+# ── 7. Push Kong declarative config via admin API ────────────────────────────
 # Kong DB-less mode reads kong.yml once at pod start. If the configmap kubelet
 # sync races with pod startup, Kong loads a stale config. Pushing via admin API
 # after Kong is ready guarantees the correct config is always applied.
@@ -65,4 +110,3 @@ curl -s -X POST "$KONG_ADMIN/config" \
 echo ""
 echo "=== Done. Watching pod status (Ctrl+C to exit) ==="
 kubectl get pods -w
-

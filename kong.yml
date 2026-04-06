@@ -89,6 +89,7 @@ services:
             config:
               origins:
                 - "http://localhost:8080"
+                - "http://localhost:30080"
               methods:
                 - GET
                 - POST
@@ -107,6 +108,11 @@ services:
             config:
               minute: 60
               policy: local
+          - name: jwt
+            config:
+              key_claim_name: kid
+              claims_to_verify:
+                - exp
 
   # 2. cancel-booking composite
   - name: cancel-booking-service
@@ -127,6 +133,7 @@ services:
             config:
               origins:
                 - "http://localhost:8080"
+                - "http://localhost:30080"
               methods:
                 - GET
                 - POST
@@ -170,6 +177,7 @@ services:
             config:
               origins:
                 - "http://localhost:8080"
+                - "http://localhost:30080"
               methods:
                 - GET
                 - POST
@@ -213,6 +221,7 @@ services:
             config:
               origins:
                 - "http://localhost:8080"
+                - "http://localhost:30080"
               methods:
                 - GET
                 - POST
@@ -257,6 +266,7 @@ services:
             config:
               origins:
                 - "http://localhost:8080"
+                - "http://localhost:30080"
               methods:
                 - GET
                 - POST
@@ -275,6 +285,11 @@ services:
             config:
               minute: 60
               policy: local
+          - name: jwt
+            config:
+              key_claim_name: kid
+              claims_to_verify:
+                - exp
 
   # 6. booking atomic service
   - name: booking-service
@@ -296,6 +311,7 @@ services:
             config:
               origins:
                 - "http://localhost:8080"
+                - "http://localhost:30080"
               methods:
                 - GET
                 - POST
@@ -339,6 +355,7 @@ services:
             config:
               origins:
                 - "http://localhost:8080"
+                - "http://localhost:30080"
               methods:
                 - GET
                 - POST
@@ -383,6 +400,7 @@ services:
             config:
               origins:
                 - "http://localhost:8080"
+                - "http://localhost:30080"
               methods:
                 - GET
                 - POST
@@ -427,6 +445,7 @@ services:
             config:
               origins:
                 - "http://localhost:8080"
+                - "http://localhost:30080"
               methods:
                 - GET
                 - POST

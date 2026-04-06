@@ -31,6 +31,9 @@ spec:
             httpGet:
               path: /health
               port: 5001
+              httpHeaders:
+                - name: Host
+                  value: localhost
             initialDelaySeconds: 20
             periodSeconds: 15
             failureThreshold: 5
@@ -38,6 +41,9 @@ spec:
             httpGet:
               path: /health
               port: 5001
+              httpHeaders:
+                - name: Host
+                  value: localhost
             initialDelaySeconds: 20
             periodSeconds: 15
             failureThreshold: 5

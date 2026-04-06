@@ -236,6 +236,86 @@ Users see "save failed, please try again" and are re-prompted for profile comple
 
 **Key rule:** Always use `http://localhost:30000` as the API base URL when building for k8s. The docker-compose dev environment uses `http://localhost:8000`.
 
+**Regression trap:** `deploy-k8s.sh` may export `VITE_API_BASE_URL=http://localhost:30000`, but if `build-images.sh` re-sources `.env` afterward, `.env` can overwrite it back to `http://localhost:8000`. Preserve the exported override when building for k8s.
+
+---
+
+## 15. K8s Flask pods fail health probes with HTTP 400, then Kong returns 502/503
+
+**Symptom:** `vehicle-service`, `booking-service`, or `report-service` pods keep restarting in k8s, while Kong returns `502` for routes like `/api/vehicles` and composites like `/api/book-car` fail with `503`.
+
+**Cause:** These Flask services set `TRUSTED_HOSTS`. Kubernetes health probes hit `/health` using a pod-IP host header, which Flask rejects with `400`, so kubelet marks the pod unhealthy and keeps restarting it.
+
+**Important:** This is a different failure mode from error #9. Error #9 is the older Docker/internal-DNS underscore problem (`websocket_server` vs `websocket-server`, `booking_service` vs `booking-service`). That older bug breaks service-to-service calls because Flask rejects underscored `Host` headers. This k8s bug happens even with correctly hyphenated service names, because kubelet probes `/health` with the pod IP as the host.
+
+**Fix:** In the k8s Deployment probes, send `Host: localhost`:
+```yaml
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 5001
+    httpHeaders:
+      - name: Host
+        value: localhost
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 5001
+    httpHeaders:
+      - name: Host
+        value: localhost
+```
+
+This is now applied to the affected services. Redeploy with `./scripts/deploy-k8s.sh`.
+
+---
+
+## 16. Stripe key change — dependency and rollout map
+
+**Symptom:** You want to swap `STRIPE_SECRET_KEY` from placeholder/test to a real key and need to know what actually changes.
+
+**Where Stripe is used:**
+- `stripe-wrapper` reads `STRIPE_SECRET_KEY` from the `api-keys` K8s Secret or from `.env` in Docker Compose.
+- `composite/book_car` calls `stripe-wrapper` for charges.
+- `composite/cancel_booking` calls `stripe-wrapper` for refunds.
+- The frontend currently sends the hardcoded test payment method `pm_card_visa`, so secret changes alone do NOT make the browser flow production-ready.
+
+**K8s: change only the Stripe secret key**
+- Update `.env` with `STRIPE_SECRET_KEY=...` if you want `scripts/setup-secrets.sh` to source it.
+- Re-run `./scripts/setup-secrets.sh` or `./scripts/deploy-k8s.sh --apply`.
+- Required pod restart: `stripe-wrapper`.
+- Pods that depend on it functionally but do not need rebuilds: `composite-book-car`, `composite-cancel-booking`.
+- No image rebuild is required for a secret-only change.
+
+**Docker Compose: change only the Stripe secret key**
+- Update `.env`.
+- Recreate `stripe_wrapper` so it picks up the new env var:
+```bash
+docker compose up -d stripe_wrapper
+```
+- Dependent services (`composite_book_car`, `composite_cancel_booking`) do not need rebuilds for a secret-only change.
+
+**If you want real live Stripe payments, not fallback/mock behavior**
+- Secret change alone is not enough.
+- The frontend still posts:
+```js
+payment_method: 'pm_card_visa'
+```
+- `stripe-wrapper` also defaults to `pm_card_visa` if none is passed.
+- With a real live secret key, that test payment method will usually fail and the wrapper will fall back to mock IDs unless the app is changed.
+
+**Production-readiness checklist**
+- Update `STRIPE_SECRET_KEY`.
+- Add/use a Stripe publishable key in the frontend.
+- Replace the hardcoded `pm_card_visa` flow with real Stripe.js payment method creation.
+- Rebuild the frontend image after frontend payment changes.
+- Rebuild `stripe-wrapper` only if you change its code, not if you only change the secret.
+
+**Risk map**
+- Low risk: changing only `STRIPE_SECRET_KEY` for the existing mock-friendly flow. Usually only `stripe-wrapper` needs restart.
+- Medium risk: switching from test secret to live secret while still sending `pm_card_visa`. Charges will fail and silently fall back to mock behavior, which can hide the misconfiguration.
+- High risk: moving to real live payments. This touches frontend payment collection, Stripe publishable-key config, and end-to-end booking/refund behavior.
+
 ---
 
 ## 13. Kong DB-less mode loads stale config after `kubectl rollout restart`
