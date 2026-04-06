@@ -19,7 +19,6 @@ docker build -t esd-vehicle-service:latest    "$ROOT/atomic/vehicle_service"
 docker build -t esd-booking-service:latest    "$ROOT/atomic/booking_service"
 docker build -t esd-driver-service:latest     "$ROOT/atomic/driver_service"
 docker build -t esd-report-service:latest     "$ROOT/atomic/report_service"
-docker build -t esd-pricing-service:latest    "$ROOT/atomic/pricing_service"
 
 # Composite services
 docker build -t esd-composite-book-car:latest       "$ROOT/composite/book_car"

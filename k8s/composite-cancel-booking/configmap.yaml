@@ -9,5 +9,6 @@ data:
   # Hyphenated K8s Service names — override app.py underscore defaults
   BOOKING_SERVICE_HOST: "booking-service:5002"
   VEHICLE_SERVICE_HOST: "vehicle-service:5001"
-  PRICING_SERVICE_HOST: "pricing-service:5005"
+  # Pricing is served via Kong -> OutSystems, not a local pricing pod
+  PRICING_SERVICE_HOST: "kong:8000"
   STRIPE_WRAPPER_HOST: "stripe-wrapper:6202"

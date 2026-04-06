@@ -55,7 +55,6 @@ DEPLOYMENTS=(
   booking-service
   driver-service
   report-service
-  pricing-service
   composite-book-car
   composite-cancel-booking
   composite-report-issue

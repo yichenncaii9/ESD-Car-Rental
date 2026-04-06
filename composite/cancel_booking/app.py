@@ -26,6 +26,36 @@ PRICING_HOST = os.environ.get("PRICING_SERVICE_HOST", "pricing_service:5005")
 STRIPE_HOST = os.environ.get("STRIPE_WRAPPER_HOST", "stripe-wrapper:6202")
 
 
+def set_vehicle_status(vehicle_id: str, status: str, retries: int = 2, allow_firestore_fallback: bool = False) -> bool:
+    """Update vehicle status via vehicle_service, with Firestore fallback for release safety."""
+    for attempt in range(1, retries + 1):
+        try:
+            r = requests.put(
+                f"http://{VEHICLE_HOST}/api/vehicles/{vehicle_id}/status",
+                json={"status": status},
+                timeout=5,
+            )
+            if r.status_code == 200:
+                return True
+            print(f"[cancel_booking] Vehicle status attempt {attempt} returned {r.status_code}")
+        except Exception as e:
+            print(f"[cancel_booking] Vehicle status attempt {attempt} failed: {e}")
+
+    if allow_firestore_fallback and db is not None:
+        try:
+            doc_ref = db.collection("vehicles").document(vehicle_id)
+            if not doc_ref.get().exists:
+                print(f"[cancel_booking] Firestore fallback failed: vehicle {vehicle_id} not found")
+                return False
+            doc_ref.update({"status": status})
+            print(f"[cancel_booking] Firestore fallback updated vehicle {vehicle_id} -> {status}")
+            return True
+        except Exception as e:
+            print(f"[cancel_booking] Firestore fallback vehicle update failed: {e}")
+
+    return False
+
+
 @app.route("/health")
 def health():
     return jsonify({"status": "ok"}), 200
@@ -152,16 +182,7 @@ def cancel_booking():
     # Step 8: Release vehicle — retry once on failure
     vehicle_id = booking.get("vehicle_id")
     if vehicle_id:
-        for attempt in range(2):
-            try:
-                rv = requests.put(f"http://{VEHICLE_HOST}/api/vehicles/{vehicle_id}/status",
-                                  json={"status": "available"}, timeout=5)
-                if rv.status_code == 200:
-                    break
-                print(f"[cancel_booking] Vehicle release attempt {attempt+1} returned {rv.status_code}")
-            except Exception as e:
-                print(f"[cancel_booking] Vehicle release attempt {attempt+1} failed: {e}")
-        else:
+        if not set_vehicle_status(vehicle_id, "available", retries=2, allow_firestore_fallback=True):
             print(f"[cancel_booking] WARNING: vehicle {vehicle_id} may be stuck in rented state after cancellation")
 
     # Return COMP-07 response shape

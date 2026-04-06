@@ -26,6 +26,36 @@ BOOKING_HOST = os.environ.get("BOOKING_SERVICE_HOST", "booking-service:5002")
 STRIPE_HOST = os.environ.get("STRIPE_WRAPPER_HOST", "stripe-wrapper:6202")
 
 
+def set_vehicle_status(vehicle_id: str, status: str, retries: int = 1, allow_firestore_fallback: bool = False) -> bool:
+    """Update vehicle status via vehicle_service, with optional Firestore fallback for rollback paths."""
+    for attempt in range(1, retries + 1):
+        try:
+            r = requests.put(
+                f"http://{VEHICLE_HOST}/api/vehicles/{vehicle_id}/status",
+                json={"status": status},
+                timeout=5,
+            )
+            if r.status_code == 200:
+                return True
+            print(f"[book_car] vehicle status update attempt {attempt} returned {r.status_code}")
+        except Exception as e:
+            print(f"[book_car] vehicle status update attempt {attempt} failed: {e}")
+
+    if allow_firestore_fallback and db is not None:
+        try:
+            doc_ref = db.collection("vehicles").document(vehicle_id)
+            if not doc_ref.get().exists:
+                print(f"[book_car] Firestore fallback failed: vehicle {vehicle_id} not found")
+                return False
+            doc_ref.update({"status": status})
+            print(f"[book_car] Firestore fallback updated vehicle {vehicle_id} -> {status}")
+            return True
+        except Exception as e:
+            print(f"[book_car] Firestore fallback vehicle update failed: {e}")
+
+    return False
+
+
 @app.route("/health")
 def health():
     return jsonify({"status": "ok"}), 200
@@ -87,13 +117,7 @@ def book_car():
         return jsonify({"status": "error", "message": "Vehicle not available"}), 409
 
     # Step 4: Lock vehicle (set status="rented") before charging — prevents double-booking
-    try:
-        r = requests.put(f"http://{VEHICLE_HOST}/api/vehicles/{vehicle_id}/status",
-                         json={"status": "rented"}, timeout=5)
-    except Exception as e:
-        print(f"[book_car] vehicle lock failed: {e}")
-        return jsonify({"status": "error", "message": "Vehicle service temporarily unavailable. Please try again."}), 503
-    if r.status_code != 200:
+    if not set_vehicle_status(vehicle_id, "rented", retries=1, allow_firestore_fallback=False):
         return jsonify({"status": "error", "message": "Failed to lock vehicle"}), 502
 
     # Step 5: Get pricing
@@ -101,8 +125,7 @@ def book_car():
                      params={"vehicle_type": vehicle_type, "hours": hours}, timeout=5)
     if r.status_code != 200:
         # Rollback vehicle lock
-        requests.put(f"http://{VEHICLE_HOST}/api/vehicles/{vehicle_id}/status",
-                     json={"status": "available"}, timeout=5)
+        set_vehicle_status(vehicle_id, "available", retries=2, allow_firestore_fallback=True)
         return jsonify({"status": "error", "message": "Pricing service error"}), 502
     total_price = r.json().get("total", 0)
 
@@ -114,8 +137,7 @@ def book_car():
                       json=charge_body, timeout=10)
     if r.status_code != 200:
         # Rollback vehicle lock
-        requests.put(f"http://{VEHICLE_HOST}/api/vehicles/{vehicle_id}/status",
-                     json={"status": "available"}, timeout=5)
+        set_vehicle_status(vehicle_id, "available", retries=2, allow_firestore_fallback=True)
         return jsonify({"status": "error", "message": "Payment failed"}), 500
     stripe_resp = r.json()
     payment_intent_id = stripe_resp.get("payment_intent_id")
@@ -140,8 +162,8 @@ def book_car():
         except Exception as e:
             print(f"[book_car] Stripe refund rollback failed: {e}")
         try:
-            requests.put(f"http://{VEHICLE_HOST}/api/vehicles/{vehicle_id}/status",
-                         json={"status": "available"}, timeout=5)
+            if not set_vehicle_status(vehicle_id, "available", retries=2, allow_firestore_fallback=True):
+                print(f"[book_car] Vehicle unlock rollback failed for {vehicle_id}")
         except Exception as e:
             print(f"[book_car] Vehicle unlock rollback failed: {e}")
         return jsonify({"status": "error", "message": "Booking creation failed; payment refunded"}), 500

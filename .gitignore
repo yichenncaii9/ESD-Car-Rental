@@ -21,6 +21,7 @@ venv/
 # Node / Frontend
 node_modules/
 dist/
+frontend/dist/
 .DS_Store
 
 # IDE
@@ -49,6 +50,7 @@ COMMON_ERRORS.md
 IMPLEMENTATION.md
 "Create Order service using OutSystems.md"
 OUTSYSTEMS_PRICING_GUIDE.md
+APPENDIX_API_CURRENT.md
 demo.py
 clear_ghost_bookings.py
 clear_all_reports.py
@@ -56,6 +58,8 @@ clear_empty_diagnosis_reports.py
 verify_phase1.sh
 verify_phase3.sh
 verify_phase4.sh
+scripts/verify_phase5.sh
+scripts/verify_phase6.sh
 scriptsClaude/
 .planning/
 .superpowers/
