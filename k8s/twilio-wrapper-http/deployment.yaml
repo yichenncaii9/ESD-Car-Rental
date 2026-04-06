@@ -20,21 +20,8 @@ spec:
           ports:
             - containerPort: 6203
           env:
-            - name: TWILIO_ACCOUNT_SID
-              valueFrom:
-                secretKeyRef:
-                  name: api-keys
-                  key: TWILIO_ACCOUNT_SID
-            - name: TWILIO_AUTH_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: api-keys
-                  key: TWILIO_AUTH_TOKEN
-            - name: TWILIO_FROM_NUMBER
-              valueFrom:
-                secretKeyRef:
-                  name: api-keys
-                  key: TWILIO_FROM_NUMBER
+            - name: PORT
+              value: "6203"
           livenessProbe:
             httpGet:
               path: /health

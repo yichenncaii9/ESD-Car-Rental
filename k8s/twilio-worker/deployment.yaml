@@ -33,25 +33,5 @@ spec:
                 configMapKeyRef:
                   name: common-config
                   key: WEBSOCKET_SERVER_URL
-            - name: TWILIO_ACCOUNT_SID
-              valueFrom:
-                secretKeyRef:
-                  name: api-keys
-                  key: TWILIO_ACCOUNT_SID
-            - name: TWILIO_AUTH_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: api-keys
-                  key: TWILIO_AUTH_TOKEN
-            - name: TWILIO_FROM_NUMBER
-              valueFrom:
-                secretKeyRef:
-                  name: api-keys
-                  key: TWILIO_FROM_NUMBER
-            - name: TWILIO_SERVICE_TEAM_NUMBER
-              valueFrom:
-                secretKeyRef:
-                  name: api-keys
-                  key: TWILIO_SERVICE_TEAM_NUMBER
-          # No ports — AMQP consumer only, nothing calls into this worker over HTTP
-          # No livenessProbe — no HTTP endpoint to probe; pika retry self-heals on RabbitMQ startup
+          # No ports — AMQP consumer only
+          # No livenessProbe — pika retry self-heals on RabbitMQ startup

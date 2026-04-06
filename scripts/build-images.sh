@@ -27,13 +27,13 @@ docker build -t esd-composite-resolve-issue:latest  "$ROOT/composite/resolve_iss
 docker build -t esd-openai-wrapper:latest      "$ROOT/wrappers/openai_wrapper"
 docker build -t esd-googlemaps-wrapper:latest  "$ROOT/wrappers/googlemaps_wrapper"
 docker build -t esd-stripe-wrapper:latest      "$ROOT/wrappers/stripe_wrapper"
-docker build -t esd-twilio-wrapper-http:latest "$ROOT/wrappers/twilio_wrapper"
+docker build -t esd-twilio-wrapper-http:latest "$ROOT/wrappers/notification_wrapper"
 
 # WebSocket server
 docker build -t esd-websocket-server:latest "$ROOT/websocket_server"
 
 # Workers
-docker build -t esd-twilio-worker:latest "$ROOT/workers/twilio_wrapper"
+docker build -t esd-twilio-worker:latest "$ROOT/workers/notification_wrapper"
 docker build -t esd-activity-log:latest  "$ROOT/workers/activity_log"
 
 # Frontend — VITE_* baked at build time
@@ -45,7 +45,7 @@ docker build -t esd-frontend:latest \
   --build-arg VITE_FIREBASE_MESSAGING_SENDER_ID="${VITE_FIREBASE_MESSAGING_SENDER_ID}" \
   --build-arg VITE_FIREBASE_APP_ID="${VITE_FIREBASE_APP_ID}" \
   --build-arg VITE_GOOGLE_MAPS_KEY="${VITE_GOOGLE_MAPS_KEY}" \
-  --build-arg VITE_API_BASE_URL="${VITE_API_BASE_URL:-http://localhost:8000}" \
+  --build-arg VITE_API_BASE_URL="${VITE_API_BASE_URL:-http://localhost:30000}" \
   "$ROOT/frontend"
 
 echo "=== All images built ==="

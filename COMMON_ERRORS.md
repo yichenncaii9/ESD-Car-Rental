@@ -183,6 +183,82 @@ Then hard-refresh the browser (`Cmd+Shift+R` / `Ctrl+Shift+R`) to bypass the bro
 
 ---
 
+## 14. K8s pods stuck in `ContainerCreating` — missing Secrets
+
+**Symptom:** Many pods (driver-service, booking-service, vehicle-service, composites, activity-log) stay in `ContainerCreating` indefinitely. `kubectl describe pod` shows:
+```
+MountVolume.SetUp failed for volume "firebase-sa": secret "firebase-sa" not found
+```
+Or wrappers (openai, googlemaps, stripe) show `CreateContainerConfigError` with:
+```
+secret "api-keys" not found
+```
+
+**Cause:** K8s Secrets are not stored in git (correctly). A fresh cluster has no secrets. All service pods that need Firebase or API keys will block on mount until the secrets exist.
+
+**Fix:** Run once after cluster setup or after wiping the cluster:
+```bash
+# 1. Firebase service account (for all Firestore-connected services)
+kubectl create secret generic firebase-sa \
+  --from-file=firebase-service-account.json=./firebase-service-account.json
+
+# 2. API keys (for openai-wrapper, googlemaps-wrapper, stripe-wrapper)
+kubectl create secret generic api-keys \
+  --from-literal=OPENAI_API_KEY="<from .env>" \
+  --from-literal=GOOGLE_MAPS_API_KEY="<from .env>" \
+  --from-literal=STRIPE_SECRET_KEY="<from Stripe dashboard>"
+```
+
+After creating secrets, restart the stuck deployments:
+```bash
+kubectl rollout restart deployment --all
+```
+
+**Note:** Pods stuck in ContainerCreating BEFORE the secret was created will not automatically recover — they require a rollout restart.
+
+---
+
+## 12. K8s frontend calls wrong Kong port — CORS blocked, profile save fails
+
+**Symptom:** Frontend served from `http://localhost:30080` (K8s NodePort) sends API calls to `http://localhost:8000` (docker-compose Kong) instead of `http://localhost:30000` (k8s Kong NodePort). Browser blocks the request with:
+```
+Access-Control-Allow-Origin: http://localhost:8080 ≠ http://localhost:30080
+```
+Users see "save failed, please try again" and are re-prompted for profile completion because the driver POST silently fails.
+
+**Root cause:** Vite bakes `VITE_API_BASE_URL` into the JS bundle at Docker build time. The default in `scripts/build-images.sh` was `http://localhost:8000`. When deployed to k8s, the Kong proxy is on NodePort `30000`, not `8000`.
+
+**Fix (already applied):**
+- `scripts/build-images.sh` default changed to `http://localhost:30000`
+- `k8s/kong/kong.yml` CORS origins updated to include `http://localhost:30080`
+- Rebuild frontend image: `docker build -t esd-frontend:latest --build-arg VITE_API_BASE_URL=http://localhost:30000 ./frontend`
+- Redeploy: `kubectl rollout restart deployment/frontend`
+
+**Key rule:** Always use `http://localhost:30000` as the API base URL when building for k8s. The docker-compose dev environment uses `http://localhost:8000`.
+
+---
+
+## 13. Kong DB-less mode loads stale config after `kubectl rollout restart`
+
+**Symptom:** After redeploying Kong via `kubectl rollout restart`, the new configmap content is visible inside the pod (`cat /usr/local/kong/declarative/kong.yml` shows the right content) but `GET /plugins` via the admin API shows old values. CORS or JWT rules appear not to change.
+
+**Cause:** Kong DB-less mode reads `KONG_DECLARATIVE_CONFIG` **once at startup**. Kubernetes mounts configmaps as volume-backed symlinks that are synced by the kubelet on a ~60s cycle. There is a race: the pod starts, Kong reads the file (gets stale content), then kubelet syncs the updated content. Now the file is correct but Kong already loaded the old config and won't reload it.
+
+**Fix:** After `kubectl rollout restart deployment/kong`, push the config explicitly via admin API:
+```bash
+curl -X POST http://localhost:30001/config \
+  -F "config=<k8s/kong/kong.yml"
+```
+This is automated in `scripts/deploy-k8s.sh` — it waits for Kong ready then POSTs the config.
+
+**Verify the fix worked:**
+```bash
+curl -s http://localhost:30001/plugins | python3 -c \
+  "import sys,json; d=json.load(sys.stdin); print([p['config']['origins'] for p in d['data'] if p['name']=='cors'][0])"
+```
+
+---
+
 ## 11. Service Dashboard shows "No pending reports" despite reports existing in Firestore
 
 **Symptom:** The Service Dashboard loads, shows "No pending reports", even though `GET /api/reports/pending` returns data.

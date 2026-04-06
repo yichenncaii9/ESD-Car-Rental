@@ -10,7 +10,7 @@ _transform: true
 # If Kong starts returning 401 with "Invalid signature", re-fetch the key from the x509 endpoint above,
 # match the kid in your token's header, and update rsa_public_key in this file.
 # For production, use the kong-oidc plugin instead (supports JWKS auto-fetch).
-# Key embedded: kid=732ca96713b1dd172385084ce9f4381ad00cece4 (expires 2026-03-30)
+# Keys embedded: kid=732ca96713b1dd172385084ce9f4381ad00cece4 (expires 2026-03-30), kid=37300769a07e05116f7e5138fa9093685eebc240 (expires 2026-04-07), kid=5e82afb4ef69b76383069ac6b57e7e65203bfe96 (added 2026-04-05)
 
 consumers:
   - username: firebase-frontend
@@ -26,6 +26,32 @@ consumers:
           omHd9wHJ7Z7WscnsEBdzfxeGmyRiZ2d5LLGl3/z8cr/m8glnzjDAG7maNB7v9A42
           OjjOliQp75RjDx1s5HO90blTa6/27pWdNphYSInRa9wvrtUZy3D0FxHQ4S8SMS44
           dQIDAQAB
+          -----END PUBLIC KEY-----
+        secret: "not-used-for-rs256"
+      - algorithm: RS256
+        key: "37300769a07e05116f7e5138fa9093685eebc240"
+        rsa_public_key: |
+          -----BEGIN PUBLIC KEY-----
+          MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAq9iLxkvxec8Dlw1Fgqec
+          QtZSP4R88SUVcWM6k/QUX+57cdvLg7msGVDXUgtg0SNIxWeplT1KwFwGHqwQFcYW
+          Nv4mCojefsOq7L+XM8noZxE0iOOB/ZkKxmRIucHk//Vjc7iZH7nIvS3+MyA92uqr
+          75qetT+5wDb8QABJe09L0SIFxtMpG7FZEC3oy6qvqCfGxdU7AoAtpZQMVKGznFfJ
+          Wo1+2IOiExEsI/6Yp7v+N6kog8cu8c5RiJ0bW4kTcBIfwuWBOnYqf8WqDVTp0JRJ
+          TwkUYxyuZz+PvXPLPZ6Pissr0k8sIgkSceV0GJAs4dzbK1kI86MxTj1/sijbqJ0B
+          3QIDAQAB
+          -----END PUBLIC KEY-----
+        secret: "not-used-for-rs256"
+      - algorithm: RS256
+        key: "5e82afb4ef69b76383069ac6b57e7e65203bfe96"
+        rsa_public_key: |
+          -----BEGIN PUBLIC KEY-----
+          MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0sYLMUtF8V45W6UA76mz
+          EqWpgSiuV/GaiVoGEeGuIIubn1q2h1Ir32SINRnxTcgZax3Tnyr1Qw9sNIb2lMyZ
+          Frd14SQZBCYou5Wulo/xKlpJ6y7DY/I41oR701aJrxsH5ER5KHSsVQ5hC/wpsOPB
+          MvY6rg6Z4GcwMHP2iibSkSIEfdR6WqNz1Ooc4QRBavhbQyDAjqrLqFS8ObT/9nMx
+          Nq/YqLrndMKOkmxBbBtf/pbc4YNdsjWxWJ3wP5iIE/Rx/DELqUU2hkORznHmmeb3
+          h77sA9qBygwMYxrClokVXaH4INk+U3/mDROEsW8W7KPAe8oz00th1SIwElMuCaOS
+          hQIDAQAB
           -----END PUBLIC KEY-----
         secret: "not-used-for-rs256"
       - algorithm: RS256
@@ -63,6 +89,7 @@ services:
             config:
               origins:
                 - "http://localhost:8080"
+                - "http://localhost:30080"
               methods:
                 - GET
                 - POST
@@ -106,6 +133,7 @@ services:
             config:
               origins:
                 - "http://localhost:8080"
+                - "http://localhost:30080"
               methods:
                 - GET
                 - POST
@@ -149,6 +177,7 @@ services:
             config:
               origins:
                 - "http://localhost:8080"
+                - "http://localhost:30080"
               methods:
                 - GET
                 - POST
@@ -192,6 +221,7 @@ services:
             config:
               origins:
                 - "http://localhost:8080"
+                - "http://localhost:30080"
               methods:
                 - GET
                 - POST
@@ -221,6 +251,7 @@ services:
     url: http://vehicle-service:5001
     routes:
       - name: vehicles-route
+        preserve_host: true
         paths:
           - /api/vehicles
         strip_path: false
@@ -235,6 +266,7 @@ services:
             config:
               origins:
                 - "http://localhost:8080"
+                - "http://localhost:30080"
               methods:
                 - GET
                 - POST
@@ -264,6 +296,7 @@ services:
     url: http://booking-service:5002
     routes:
       - name: bookings-route
+        preserve_host: true
         paths:
           - /api/bookings
         strip_path: false
@@ -278,6 +311,7 @@ services:
             config:
               origins:
                 - "http://localhost:8080"
+                - "http://localhost:30080"
               methods:
                 - GET
                 - POST
@@ -321,6 +355,7 @@ services:
             config:
               origins:
                 - "http://localhost:8080"
+                - "http://localhost:30080"
               methods:
                 - GET
                 - POST
@@ -350,6 +385,7 @@ services:
     url: http://report-service:5004
     routes:
       - name: reports-route
+        preserve_host: true
         paths:
           - /api/reports
         strip_path: false
@@ -364,6 +400,7 @@ services:
             config:
               origins:
                 - "http://localhost:8080"
+                - "http://localhost:30080"
               methods:
                 - GET
                 - POST
@@ -389,6 +426,7 @@ services:
                 - exp
 
   # 9. pricing atomic service (OutSystems)
+  # No JWT plugin — composites call this route internally (no browser token available)
   - name: pricing-service
     url: https://personal-gavwz54n.outsystemscloud.com/TB_PricingService/rest/PricingService
     routes:
@@ -407,6 +445,7 @@ services:
             config:
               origins:
                 - "http://localhost:8080"
+                - "http://localhost:30080"
               methods:
                 - GET
                 - POST
@@ -425,8 +464,3 @@ services:
             config:
               minute: 60
               policy: local
-          - name: jwt
-            config:
-              key_claim_name: kid
-              claims_to_verify:
-                - exp

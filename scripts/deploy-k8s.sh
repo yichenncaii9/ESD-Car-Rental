@@ -27,14 +27,42 @@ if [ "$SKIP_BUILD" = false ]; then
   echo ""
 fi
 
-# ── 2. Apply all k8s manifests ─────────────────────────────────────────────────
+# ── 2. Ensure we're on the local docker-desktop context ───────────────────────
+CURRENT_CONTEXT=$(kubectl config current-context 2>/dev/null || echo "none")
+if [[ "$CURRENT_CONTEXT" != "docker-desktop" ]]; then
+  echo "ERROR: kubectl context is '$CURRENT_CONTEXT', expected 'docker-desktop'."
+  echo "Run: kubectl config use-context docker-desktop"
+  exit 1
+fi
+
+# ── 3. Apply all k8s manifests ─────────────────────────────────────────────────
 echo "=== Applying k8s manifests ==="
 kubectl apply -f "$ROOT/k8s/" --recursive
 
-# ── 3. Restart all deployments to pick up new images ──────────────────────────
+# ── 4. Restart all deployments to pick up new images ──────────────────────────
 echo "=== Restarting all deployments ==="
 kubectl rollout restart deployment --all
+
+# ── 5. Push Kong declarative config via admin API ────────────────────────────
+# Kong DB-less mode reads kong.yml once at pod start. If the configmap kubelet
+# sync races with pod startup, Kong loads a stale config. Pushing via admin API
+# after Kong is ready guarantees the correct config is always applied.
+echo "=== Waiting for Kong to be ready ==="
+kubectl rollout status deployment/kong --timeout=120s
+
+echo "=== Pushing Kong declarative config via admin API ==="
+KONG_ADMIN="http://localhost:30001"
+for i in 1 2 3 4 5; do
+  HTTP=$(curl -s -o /dev/null -w "%{http_code}" "$KONG_ADMIN/")
+  if [[ "$HTTP" == "200" ]]; then break; fi
+  echo "  Kong admin not ready yet (attempt $i), waiting 5s..."
+  sleep 5
+done
+curl -s -X POST "$KONG_ADMIN/config" \
+  -F "config=<$ROOT/k8s/kong/kong.yml" \
+  -o /dev/null -w "Kong config push: HTTP %{http_code}\n"
 
 echo ""
 echo "=== Done. Watching pod status (Ctrl+C to exit) ==="
 kubectl get pods -w
+
